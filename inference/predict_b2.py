@@ -8,8 +8,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from data.preprocess import b2_time_prediction_preprocess
 from models.b2_predictor import B2PredictorModel
 
-DATA_PATH = 'data/dataset_b2.csv'
-MODEL_PATH = 'inference/b2_model.pkl'
+DATA_PATH = '../data/datasets/dataset_b2.csv'
+MODEL_PATH = '../inference/b2_model.pkl'
 
 def train_and_save():
 
@@ -25,10 +25,8 @@ def train_and_save():
 def predict_days(user_data):
     if not os.path.exists(MODEL_PATH):
         train_and_save()
-    
 
     model = joblib.load(MODEL_PATH)
-    
 
     df = pd.DataFrame([user_data])
     days = model.predict(df)[0]
@@ -41,16 +39,23 @@ if __name__ == "__main__":
     if not os.path.exists(DATA_PATH):
         print(f"Нет файла {DATA_PATH}")
     else:
-        
+
         test_user = {
-            'unique_words': 1000,
-            'words_a1': 50, 'words_a2': 5, 'words_b1': 5, 'words_b2': 0,
-            'avg_acc_7d': 0.7, 'avg_acc_30d': 0.8, 
-            'avg_time_sec': 4.0,
-            'words_day_7d': 14, 'words_day_30d': 140,
-            'streak': 4, 'sessions_week': 9
+            'unique_words': 1900,
+            'words_a1': 850,
+            'words_a2': 650,
+            'words_b1': 350,
+            'words_b2': 50,
+
+            'avg_acc_7d': 0.74,
+            'avg_acc_30d': 0.71,
+            'avg_time_sec': 4.1,
+
+            'words_day_7d': 11,
+            'words_day_30d': 9,
+            'streak': 9,
+            'sessions_week': 4
         }
-        
-        print("\nТестовый прогноз юзера:")
+
         result = predict_days(test_user)
         print(f"До уровня B2 осталось примерно: {result} дней")
