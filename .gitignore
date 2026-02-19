@@ -6,5 +6,5 @@ __pycache__/
 data/*.pkl
 data/*.bin
 /inference/*.kv
-/inference/*.npy
+/inference/*.kv.vectors.npy
 /inference/*.pkl
