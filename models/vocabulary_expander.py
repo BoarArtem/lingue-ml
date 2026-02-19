@@ -6,5 +6,3 @@ def pretrained_model(arr):
     return wv.most_similar(
         positive=arr
     )
-
-print(pretrained_model(["banana", "apple", "mango"]))
