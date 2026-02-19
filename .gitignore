@@ -7,3 +7,4 @@ data/*.pkl
 data/*.bin
 /inference/*.kv
 /inference/*.npy
+/inference/*.pkl
