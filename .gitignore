@@ -5,5 +5,5 @@ __pycache__/
 .env
 data/*.pkl
 data/*.bin
-inference/*.kv
-inference/*.npy
+/inference/*.kv
+/inference/*.npy
