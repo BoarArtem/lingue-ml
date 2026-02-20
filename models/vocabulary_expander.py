@@ -1,14 +1,19 @@
 from gensim.models import KeyedVectors
 
-wv = KeyedVectors.load("../inference/google_news.kv", mmap="r")
+class VocabularyExpander:
+    def __init__(self, wv: KeyedVectors):
+        self.wv = wv
 
-def vocabulary_expander(arr: list) -> list:
-    """
-    Модель будет смотреть на список пользователя и подбирать максимально те слова которые больше всего подходят для этого списка
-    :param arr: Список со словами пользователя. Иначе - колода пользователя
-    :return: Возвращает нам метод (positive=arr) - список пользователя по которому модель будет подбирать слова, (topn=10) - топ-10 слов которые имеют высший процент схожести
-    """
-    return wv.most_similar(
-        positive=arr,
-        topn=10
-    )
+    def expand(self, arr: list[str], topn: int) -> list[tuple[str, float]]:
+        """
+        Находит слова, наиболее близкие к заданному списку.
+        :param arr: Список слов для анализа
+        :param topn: Количество возвращаемых результатов
+        :return: Список кортежей (слово, схожесть)
+        """
+        return self.wv.most_similar(positive=arr, topn=topn)
+
+    @classmethod
+    def load_model(cls, path: str = "../inference/google_news.kv"):
+        wv = KeyedVectors.load(path, mmap='r')
+        return cls(wv)
