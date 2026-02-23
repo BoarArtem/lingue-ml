@@ -36,8 +36,3 @@ def llm_world_level(word: str, translation: str) -> str:
         result += chunk.choices[0].delta.content or ""
 
     return result.strip()
-
-
-if __name__ == "__main__":
-    level = llm_world_level("unfortunately", "к сожалению")
-    print(level)
