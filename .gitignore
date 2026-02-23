@@ -7,4 +7,3 @@ data/*.pkl
 data/*.bin
 /inference/*.kv
 /inference/*.kv.vectors.npy
-/inference/*.pkl
