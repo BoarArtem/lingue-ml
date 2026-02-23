@@ -1,4 +1,4 @@
-name: ML CI
+name: Lingue Machine Learning CI
 
 on:
   push:
