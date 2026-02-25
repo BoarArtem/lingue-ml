@@ -1,5 +1,8 @@
-import gensim.downloader as api
+from gensim.models import KeyedVectors
 
-wv = api.load("word2vec-google-news-300")
+wv = KeyedVectors.load_word2vec_format(
+    "../inference/crawl-300d-2M.vec",
+    binary=False
+)
 
-wv.save("google_news.kv")
+wv.save("crawl_fasttext.kv")
