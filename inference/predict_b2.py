@@ -2,6 +2,7 @@ import joblib
 import os
 import sys
 import pandas as pd
+from models.b2_predictor import B2PredictorModel
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
