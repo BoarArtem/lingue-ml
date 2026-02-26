@@ -11,28 +11,28 @@ from models.b2_predictor import B2PredictorModel
 DATA_PATH = '../data/datasets/dataset_b2.csv'
 MODEL_PATH = '../inference/b2_model.pkl'
 
-def train_and_save():
 
+def train_and_save():
     X_train, X_test, y_train, y_test = b2_time_prediction_preprocess(DATA_PATH)
     predictor = B2PredictorModel()
     predictor.train(X_train, y_train)
     predictor.evaluate(X_test, y_test)
     predictor.show_feature_importance()
-    
-    joblib.dump(predictor.get_model(), MODEL_PATH)
+
+    joblib.dump(predictor, MODEL_PATH)
 
 
 def predict_days(user_data):
     if not os.path.exists(MODEL_PATH):
         train_and_save()
 
-    model = joblib.load(MODEL_PATH)
+    predictor = joblib.load(MODEL_PATH)
 
     df = pd.DataFrame([user_data])
-    days = model.predict(df)[0]
-    
-    return int(days)
+    df = df[predictor.feature_names]
 
+    days = predictor.model.predict(df)[0]
+    return int(days)
 
 if __name__ == "__main__":
 

@@ -1,13 +1,23 @@
+import joblib
+import pandas as pd
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from gensim.models import KeyedVectors
 from groq import Groq
 import os
-
+from models.b2_predictor import B2PredictorModel
 app = FastAPI(title="ML Linguo Service")
 
 ve_model = KeyedVectors.load("inference/crawl_fasttext.kv")
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+try:
+    predictor: B2PredictorModel = joblib.load("inference/b2_model.pkl")
+except FileNotFoundError:
+    predictor = B2PredictorModel()
+    print("Модель еще не обучена. Endpoint будет работать только после обучения")
+
+class PredictRequest(BaseModel):
+    features: dict
 
 class SimilarRequest(BaseModel):
     arr: list[str]
@@ -17,6 +27,11 @@ class SimilarRequest(BaseModel):
 class WordLevelRequest(BaseModel):
     word: str
     translation: str
+
+class SentenceRequest(BaseModel):
+    word: str
+    translation: str
+    level: str
 
 @app.post("/similar")
 def similar(req: SimilarRequest):
@@ -55,3 +70,60 @@ def word_level(req: WordLevelRequest):
     )
 
     return completion.choices[0].message.content.strip()
+
+@app.post("/sentence")
+def sentence(req: SentenceRequest):
+    completion = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "Ты генерируешь только одно английское предложение. "
+                    "Без пояснений, без форматирования, без лишнего текста."
+                )
+            },
+            {
+                "role": "user",
+                "content": (
+                    f"Слово: {req.word}\n"
+                    f"Уровень: {req.level}\n"
+                    f"Перевод: {req.translation}\n\n"
+                    f"Напиши одно естественное предложение с этим словом. "
+                    f"Ответ — только предложение."
+                )
+            }
+        ],
+        temperature=0.4,
+        max_completion_tokens=40,
+        top_p=1,
+        stream=False
+    )
+
+    result = completion.choices[0].message.content.strip()
+
+    result = result.split("\n")[0]
+    if "." in result:
+        result = result[:result.find(".") + 1]
+
+    return result.strip()
+
+@app.post("/predict")
+def predict(req: PredictRequest):
+    if not predictor.feature_names:
+        raise HTTPException(status_code=400, detail="Модель не обучена")
+
+    try:
+        df = pd.DataFrame([req.features])
+
+        missing_cols = [c for c in predictor.feature_names if c not in df.columns]
+        if missing_cols:
+            raise HTTPException(status_code=400, detail=f"Отсутствуют колонки: {missing_cols}")
+
+        df = df[predictor.feature_names]
+
+        pred = predictor.model.predict(df)[0]
+        return {"prediction": int(pred)}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
