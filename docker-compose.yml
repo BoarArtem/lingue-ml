@@ -1,0 +1,14 @@
+version: "3.9"
+
+services:
+  ml-service:
+    build: .
+    container_name: lingue-ml-service
+    ports:
+      - "8000:8000"
+    environment:
+      - GROQ_API_KEY=${GROQ_API_KEY}
+    volumes:
+      - .:/app
+    command: >
+      uvicorn app:app --host 0.0.0.0 --port 8000
