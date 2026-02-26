@@ -16,6 +16,7 @@ except FileNotFoundError:
     predictor = B2PredictorModel()
     print("Модель еще не обучена. Endpoint будет работать только после обучения")
 
+
 class PredictRequest(BaseModel):
     features: dict
 
