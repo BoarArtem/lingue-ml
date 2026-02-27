@@ -1,0 +1,5 @@
+.venv
+/inference/*.kv
+/inference/*.vec
+/inference/*.kv.vectors.npy
+
