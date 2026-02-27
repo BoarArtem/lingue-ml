@@ -8,7 +8,8 @@ import os
 from models.b2_predictor import B2PredictorModel
 app = FastAPI(title="ML Linguo Service")
 
-ve_model = KeyedVectors.load("inference/crawl_fasttext.kv")
+model_dir = os.getenv("MODEL_DIR", "/models")
+ve_model = KeyedVectors.load(f"{model_dir}/crawl_fasttext.kv")
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 try:
     predictor: B2PredictorModel = joblib.load("inference/b2_model.pkl")
