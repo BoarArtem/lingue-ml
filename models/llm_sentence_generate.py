@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-def llm_sentence_generate(word: str, translation: str, level: str) -> str:
+def llm_sentence_generate(word: str, translation: str, level: str, language: str) -> str:
     client = Groq(api_key=os.getenv("GROQ_API_KEY_ARTEM"))
 
     completion = client.chat.completions.create(
@@ -23,7 +23,8 @@ def llm_sentence_generate(word: str, translation: str, level: str) -> str:
                     f"Слово: {word}\n"
                     f"Уровень: {level}\n"
                     f"Перевод: {translation}\n\n"
-                    f"Напиши одно естественное предложение с этим словом. "
+                    f"Язык на котором надо придумать предложение: {language}"
+                    f"Напиши одно естественное предложение с этим словом. Строго на языке которое я написал"
                     f"Ответ — только предложение."
                 )
             }
