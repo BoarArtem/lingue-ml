@@ -35,6 +35,7 @@ class SentenceRequest(BaseModel):
     word: str
     translation: str
     level: str
+    language: str
 
 
 # preprocess part
@@ -97,7 +98,8 @@ def sentence(req: SentenceRequest):
                     f"Слово: {req.word}\n"
                     f"Уровень: {req.level}\n"
                     f"Перевод: {req.translation}\n\n"
-                    f"Напиши одно естественное предложение с этим словом. "
+                    f"Язык на котором надо придумать предложение: {req.language}"
+                    f"Напиши одно естественное предложение с этим словом. Строго на языке которое я написал"
                     f"Ответ — только предложение."
                 )
             }
