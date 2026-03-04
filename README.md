@@ -12,5 +12,5 @@ Linguo Machine Learning... один из самых потужних сфер в
 
 Как запустить?
 1) https://github.com/BoarArtem/lingue-ml.git
-2) docker-compose up --build (весит он много конечно..18 гб)
-3) docker run -p 8000:8000 -e GROQ_API_KEY="..." lingue-ml-ml-service
+2) docker-compose --build 
+3) docker-compose up
