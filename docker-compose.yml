@@ -8,7 +8,9 @@ services:
       - "8000:8000"
     environment:
       - GROQ_API_KEY=${GROQ_API_KEY}
+      - MODEL_DIR=/models
     volumes:
       - .:/app
+      - "E:/ml-assets:/models"
     command: >
       uvicorn app:app --host 0.0.0.0 --port 8000
