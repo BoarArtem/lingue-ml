@@ -1,5 +1,22 @@
 .venv
-/inference/*.kv
-/inference/*.vec
-/inference/*.kv.vectors.npy
+venv
+__pycache__
+*.pyc
+*.pyo
 
+.git
+.gitignore
+
+ml-assets
+models
+datasets
+data
+
+inference/*.kv
+inference/*.vec
+inference/*.kv.vectors.npy
+
+.DS_Store
+Thumbs.db
+
+*.log
