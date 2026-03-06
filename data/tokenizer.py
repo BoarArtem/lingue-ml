@@ -7,7 +7,14 @@ from nltk import pos_tag
 import pymorphy3
 from razdel import tokenize
 
+import spacy
+
+import jieba
+
 morph = pymorphy3.MorphAnalyzer()
+nlp_es = spacy.load("es_core_news_sm")
+nlp_fr = spacy.load("fr_core_news_sm")
+nlp_de = spacy.load("de_core_news_sm")
 
 def get_wordnet_pos(treebank_tag):
     if treebank_tag.startswith('J'):
@@ -51,3 +58,58 @@ def sentence_preprocess_russian(sentence: str) -> list[str]:
 
     return lemmatized_words
 
+def sentence_preprocess_spanish(sentence: str) -> list[str]:
+    """
+    :param sentence: Предложение которое надо очистить для задачи
+    :return: Возвращает очищенное предложение
+    """
+    doc = nlp_es(sentence)
+
+    lemmatized_words = [
+        token.lemma_
+        for token in doc
+        if not token.is_punct and not token.is_space
+    ]
+
+    return lemmatized_words
+
+def sentence_preprocess_france(sentence: str) -> list[str]:
+    """
+    :param sentence: Предложение которое надо очистить для задачи
+    :return: Возвращает очищенное предложение
+    """
+    doc = nlp_fr(sentence)
+
+    lemmatized_words = [
+        token.lemma_
+        for token in doc
+        if not token.is_punct and not token.is_space
+    ]
+
+    return lemmatized_words
+
+def sentence_preprocess_german(sentence: str) -> list[str]:
+    """
+    :param sentence: Предложение которое надо очистить для задачи
+    :return: Возвращает очищенное предложение
+    """
+    doc = nlp_de(sentence)
+
+    lemmatized_words = [
+        token.lemma_
+        for token in doc
+        if not token.is_punct and not token.is_space
+    ]
+
+    return lemmatized_words
+
+def sentence_preprocess_chinese(sentence: str) -> list[str]:
+    """
+    :param sentence: Предложение которое надо очистить для задачи
+    :return: Возвращает очищенное предложение
+    """
+    tokens = list(jieba.cut(sentence))
+
+    return tokens
+
+print(sentence_preprocess_chinese("我喜欢学习人工智能"))
