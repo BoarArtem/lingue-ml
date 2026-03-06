@@ -6,7 +6,7 @@ from gensim.models import KeyedVectors
 from groq import Groq
 import os
 from models.b2_predictor import B2PredictorModel
-from data.tokenizer import sentence_preprocess_english
+from data.tokenizer import sentence_preprocess_english, sentence_preprocess_russian
 app = FastAPI(title="ML Linguo Service")
 
 model_dir = os.getenv("MODEL_DIR", "/models")
@@ -39,7 +39,7 @@ class SentenceRequest(BaseModel):
 
 
 # preprocess part
-class EnglishPreprocessRequest(BaseModel):
+class PreprocessRequest(BaseModel):
     sentence: str
 
 @app.post("/similar")
@@ -139,5 +139,9 @@ def predict(req: PredictRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/preprocess-en")
-def preprocess_en(req: EnglishPreprocessRequest):
+def preprocess_en(req: PreprocessRequest):
     return sentence_preprocess_english(req.sentence)
+
+@app.post("/preprocess-ru")
+def preprocess_ru(req: PreprocessRequest):
+    return sentence_preprocess_russian(req.sentence)
