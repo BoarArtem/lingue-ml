@@ -6,7 +6,7 @@ from gensim.models import KeyedVectors
 from groq import Groq
 import os
 from models.b2_predictor import B2PredictorModel
-from data.tokenizer import sentence_preprocess_english, sentence_preprocess_russian
+from data.tokenizer import sentence_preprocess_english, sentence_preprocess_russian, sentence_preprocess_spanish, sentence_preprocess_france, sentence_preprocess_german, sentence_preprocess_chinese
 app = FastAPI(title="ML Linguo Service")
 
 model_dir = os.getenv("MODEL_DIR", "/models")
@@ -41,6 +41,7 @@ class SentenceRequest(BaseModel):
 # preprocess part
 class PreprocessRequest(BaseModel):
     sentence: str
+    language: str
 
 @app.post("/similar")
 def similar(req: SimilarRequest):
@@ -138,10 +139,18 @@ def predict(req: PredictRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/preprocess-en")
-def preprocess_en(req: PreprocessRequest):
-    return sentence_preprocess_english(req.sentence)
 
-@app.post("/preprocess-ru")
-def preprocess_ru(req: PreprocessRequest):
-    return sentence_preprocess_russian(req.sentence)
+@app.post("/preprocess")
+def preprocess(req: PreprocessRequest):
+    if req.language == "en":
+        return sentence_preprocess_english(req.sentence)
+    if req.language == "ru":
+        return sentence_preprocess_russian(req.sentence)
+    if req.language == "es":
+        return sentence_preprocess_spanish(req.sentence)
+    if req.language == "fr":
+        return sentence_preprocess_france(req.sentence)
+    if req.language == "de":
+        return sentence_preprocess_german(req.sentence)
+    if req.language == "ch":
+        return sentence_preprocess_chinese(req.sentence)
