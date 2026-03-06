@@ -51,9 +51,3 @@ def sentence_preprocess_russian(sentence: str) -> list[str]:
 
     return lemmatized_words
 
-
-def sentence_preprocess(sentence: str, language: str):
-    if language == "en":
-        return sentence_preprocess_english(sentence)
-    elif language == "ru":
-        return sentence_preprocess_russian(sentence)
