@@ -2,9 +2,10 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
+api_key = os.getenv("GROQ_API_KEY")
+if not api_key:
+    api_key = os.environ.get("GROQ_API_KEY")
 
 def test_api_key_loaded():
-    api_key = os.getenv("GROQ_API_KEY")
-
-    assert api_key is not None, "Groq API key not loaded"
-    assert api_key != "", "Groq API key is empty"
+    assert api_key is not None, "API-key: GROQ_API_KEY не найдена"
+    assert api_key != "", "API-KEY: GROQ_API_KEY пуста"
