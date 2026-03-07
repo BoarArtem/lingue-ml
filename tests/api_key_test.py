@@ -8,4 +8,4 @@ if not api_key:
 
 def test_api_key_loaded():
     assert api_key is not None, "API-key: GROQ_API_KEY не найдена"
-    assert api_key != "", "API-KEY: GROQ_API_KEY пуста"
+    assert api_key != "", "API-key: GROQ_API_KEY пуста"
