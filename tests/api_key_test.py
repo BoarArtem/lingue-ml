@@ -2,10 +2,32 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
-api_key = os.getenv("GROQ_API_KEY")
-if not api_key:
-    api_key = os.environ.get("GROQ_API_KEY")
+groq_api_key = os.getenv("GROQ_API_KEY")
+r2_endpoint = os.getenv("R2_ENDPOINT")
+r2_access_key = os.getenv("R2_ACCESS_KEY")
+r2_secret_access_key = os.getenv("R2_SECRET_ACCESS_KEY")
 
-def test_api_key_loaded():
-    assert api_key is not None, "API-key: GROQ_API_KEY не найдена"
-    assert api_key != "", "API-key: GROQ_API_KEY пуста"
+if not groq_api_key:
+    groq_api_key = os.environ.get("GROQ_API_KEY")
+if not r2_endpoint:
+    r2_endpoint = os.environ.get("R2_ENDPOINT")
+if not r2_access_key:
+    r2_access_key = os.environ.get("R2_ACCESS_KEY")
+if not r2_secret_access_key:
+    r2_secret_access_key = os.environ.get("R2_SECRET_ACCESS_KEY")
+
+def test_groq_api_key_loaded():
+    assert groq_api_key is not None, "API-key: GROQ_API_KEY не найдена"
+    assert groq_api_key != "", "API-key: GROQ_API_KEY пуста"
+
+def test_r2_endpoint_loaded():
+    assert r2_endpoint is not None, "API-key: R2_ENDPOINT не найдена"
+    assert r2_endpoint != "", "API-key: R2_ENDPOINT пуста"
+
+def test_r2_access_key_loaded():
+    assert r2_access_key is not None, "API-key: R2_ACCESS_KEY не найдена"
+    assert r2_access_key != "", "API-key: R2_ACCESS_KEY пуста"
+
+def test_r2_secret_access_key():
+    assert r2_secret_access_key is not None, "API-key: R2_SECRET_ACCESS_KEY не найдена"
+    assert r2_secret_access_key != "", "API-key: R2_SECRET_ACCESS_KEY пуста"
