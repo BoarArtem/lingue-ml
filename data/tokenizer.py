@@ -111,5 +111,3 @@ def sentence_preprocess_chinese(sentence: str) -> list[str]:
     tokens = list(jieba.cut(sentence))
 
     return tokens
-
-print(sentence_preprocess_chinese("我喜欢学习人工智能"))
