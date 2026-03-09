@@ -9,8 +9,12 @@ services:
     environment:
       - GROQ_API_KEY=${GROQ_API_KEY}
       - MODEL_DIR=/models
+      - R2_ENDPOINT=${R2_ENDPOINT}
+      - R2_ACCESS_KEY=${R2_ACCESS_KEY}
+      - R2_SECRET_ACCESS_KEY=${R2_SECRET_ACCESS_KEY}
     volumes:
-      - .:/app
-      - "E:/ml-assets:/models"
-    command: >
-      uvicorn app:app --host 0.0.0.0 --port 8000
+      - models:/models
+    command: uvicorn app:app --host 0.0.0.0 --port 8000
+
+volumes:
+  models:
