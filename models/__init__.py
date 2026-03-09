@@ -1,0 +1,1 @@
+from models.b2_predictor import B2PredictorModel
