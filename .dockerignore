@@ -8,9 +8,7 @@ __pycache__
 .gitignore
 
 ml-assets
-models
 datasets
-data
 
 inference/*.kv
 inference/*.vec
