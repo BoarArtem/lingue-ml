@@ -9,7 +9,3 @@ def b2_time_prediction_preprocess(filepath):
     y = df[target_col]
 
     return train_test_split(X, y, test_size=0.2, random_state=42)
-
-
-data = pd.read_csv("./datasets/moderation_dataset.csv")
-print(data)
