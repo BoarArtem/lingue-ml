@@ -7,6 +7,7 @@ from groq import Groq
 import os
 
 from models.b2_predictor import B2PredictorModel
+from models.llm_sentence_generate import llm_sentence_generate
 from data.tokenizer import (
     sentence_preprocess_english,
     sentence_preprocess_russian,
@@ -78,9 +79,8 @@ class WordLevelRequest(BaseModel):
 
 class SentenceRequest(BaseModel):
     word: str = Field(example="dog")
-    translation: str = Field(example="собака")
     level: str = Field(example="A1")
-    language: str = Field(example="en")
+    language: str = Field(example="en | English")
 
 
 class PreprocessRequest(BaseModel):
@@ -181,7 +181,6 @@ def word_level(req: WordLevelRequest):
 Параметры:
 
 - `word` — слово
-- `translation` — перевод
 - `level` — уровень CEFR
 - `language` — язык предложения
 
@@ -194,37 +193,13 @@ def word_level(req: WordLevelRequest):
     response_description="Сгенерированное предложение"
 )
 def sentence(req: SentenceRequest):
-
-    completion = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=[
-            {
-                "role": "system",
-                "content": "Ты генерируешь только одно предложение."
-            },
-            {
-                "role": "user",
-                "content": (
-                    f"Слово: {req.word}\n"
-                    f"Уровень: {req.level}\n"
-                    f"Перевод: {req.translation}\n"
-                    f"Язык: {req.language}\n"
-                    f"Напиши одно предложение."
-                )
-            }
-        ],
-        temperature=0.4,
-        max_completion_tokens=40
+    result = llm_sentence_generate(
+        req.word,
+        req.level,
+        req.language
     )
 
-    result = completion.choices[0].message.content.strip()
-
-    result = result.split("\n")[0]
-    if "." in result:
-        result = result[:result.find(".") + 1]
-
-    return result.strip()
-
+    return result
 
 @app.post(
     "/predict",
