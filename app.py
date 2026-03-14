@@ -8,6 +8,7 @@ import os
 
 from models.b2_predictor import B2PredictorModel
 from models.llm_sentence_generate import llm_sentence_generate
+from models.llm_word_level import llm_world_level
 from data.tokenizer import (
     sentence_preprocess_english,
     sentence_preprocess_russian,
@@ -20,7 +21,7 @@ from data.tokenizer import (
 app = FastAPI(
     title="ML Linguo Service",
     description="""
-ML сервис для задач Linguo.
+ML сервис для Linguo.
 
 Возможности API:
 
@@ -29,10 +30,8 @@ ML сервис для задач Linguo.
 • генерация предложений  
 • ML предсказания  
 • preprocessing текста  
-
-Все ответы возвращаются в JSON.
 """,
-    version="1.0.0"
+    version="2.7.1"
 )
 
 model_dir = os.getenv("MODEL_DIR", "/models")
@@ -88,10 +87,6 @@ class PreprocessRequest(BaseModel):
     language: str = Field(example="en")
 
 
-# =========================
-# ENDPOINTS
-# =========================
-
 @app.post(
     "/similar",
     tags=["Embeddings"],
@@ -100,14 +95,6 @@ class PreprocessRequest(BaseModel):
 Возвращает список слов, наиболее похожих на переданные.
 
 Используется **FastText модель** (`gensim KeyedVectors`).
-
-Алгоритм:
-
-1. Проверяются слова из `arr`, которые есть в словаре.
-2. Вызывается `most_similar`.
-3. Возвращается список `(word, similarity)`.
-
-Similarity — косинусное сходство.
 """,
     response_description="Список похожих слов"
 )
@@ -148,27 +135,12 @@ A1, A2, B1, B2, C1, C2
     response_description="Уровень CEFR"
 )
 def word_level(req: WordLevelRequest):
-
-    completion = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=[
-            {
-                "role": "user",
-                "content": (
-                    f"Ты — эксперт по лингвистике и системе уровней CEFR. "
-                    f"Тебе дано слово и перевод. "
-                    f"Определи уровень CEFR.\n"
-                    f"Слово: {req.word}\n"
-                    f"Перевод: {req.translation}\n"
-                    f"Ответ: A1, A2, B1, B2, C1 или C2."
-                )
-            }
-        ],
-        temperature=0,
-        max_completion_tokens=10
+    result = llm_world_level(
+        req.word,
+        req.translation
     )
 
-    return completion.choices[0].message.content.strip()
+    return result
 
 
 @app.post(
@@ -251,12 +223,6 @@ def predict(req: PredictRequest):
     summary="Предобработка предложения",
     description="""
 Нормализует предложение.
-
-Возможные операции:
-
-• токенизация  
-• очистка текста  
-• лемматизация  
 
 Поддерживаемые языки:
 
