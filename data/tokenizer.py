@@ -4,6 +4,12 @@ from nltk.stem import WordNetLemmatizer
 from nltk.corpus import wordnet
 from nltk import pos_tag
 
+from pathlib import Path
+
+import pandas as pd
+
+import re
+
 import pymorphy3
 from razdel import tokenize
 
@@ -15,6 +21,9 @@ morph = pymorphy3.MorphAnalyzer()
 nlp_es = spacy.load("es_core_news_sm")
 nlp_fr = spacy.load("fr_core_news_sm")
 nlp_de = spacy.load("de_core_news_sm")
+
+BASE_DIR = Path(__file__).resolve().parent
+DATASET_PATH = BASE_DIR / "datasets" / "english_corpus.txt"
 
 def get_wordnet_pos(treebank_tag):
     if treebank_tag.startswith('J'):
@@ -111,3 +120,22 @@ def sentence_preprocess_chinese(sentence: str) -> list[str]:
     tokens = list(jieba.cut(sentence))
 
     return tokens
+
+def vocabulary_expander_corpus():
+    sentences = []
+
+    with open(DATASET_PATH, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.lower().strip()
+
+            if not line:
+                continue
+
+            line = re.sub(r"[^a-z\s]", "", line)
+            tokens = line.split()
+
+            if len(tokens) > 2:
+                sentences.append(tokens)
+
+    return sentences
+
