@@ -1,4 +1,5 @@
 import os
+import re
 from groq import Groq
 from dotenv import load_dotenv
 
@@ -12,27 +13,23 @@ def llm_world_level(word: str, translation: str) -> str:
         model="llama-3.3-70b-versatile",
         messages=[
             {
-                "role": "user",
+                "role": "system",
                 "content": (
-                    f"Ты — эксперт по лингвистике и системе уровней CEFR. "
-                    f"Тебе дано слово на иностранном языке и его перевод. "
-                    f"Определи уровень владения языком (по шкале CEFR), на котором это слово обычно изучается. "
-                    f"Слово: {word} "
-                    f"Перевод/значение: {translation} "
-                    f"Ответь одним значением из списка: A1, A2, B1, B2, C1, C2. "
-                    f"Никаких пояснений, только уровень."
+                    "Ты определяешь уровень CEFR слова. "
+                    "Отвечай только одним значением: A1, A2, B1, B2, C1 или C2. "
+                    "Никаких других слов."
                 )
+            },
+            {
+                "role": "user",
+                "content": f"Слово: {word}\nПеревод: {translation}\nУровень CEFR:"
             }
         ],
-        temperature=1,
-        max_completion_tokens=10,
-        top_p=1,
-        stream=True,
-        stop=None
+        temperature=0,
+        max_completion_tokens=5
     )
 
-    result = ""
-    for chunk in completion:
-        result += chunk.choices[0].delta.content or ""
+    result = completion.choices[0].message.content.strip()
 
-    return result.strip()
+    match = re.search(r"(A1|A2|B1|B2|C1|C2)", result)
+    return match.group(1) if match else "Unknown"
