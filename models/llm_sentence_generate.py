@@ -4,8 +4,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-def llm_sentence_generate(word: str, translation: str, level: str, language: str) -> str:
-    client = Groq(api_key=os.getenv("GROQ_API_KEY_ARTEM"))
+def llm_sentence_generate(word: str, level: str, language: str) -> str:
+    client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
     completion = client.chat.completions.create(
         model="llama-3.3-70b-versatile",
@@ -13,7 +13,7 @@ def llm_sentence_generate(word: str, translation: str, level: str, language: str
             {
                 "role": "system",
                 "content": (
-                    "Ты генерируешь только одно английское предложение. "
+                    "Ты генерируешь только одно предложение на нужном языке заданый в промпте. "
                     "Без пояснений, без форматирования, без лишнего текста."
                 )
             },
@@ -22,7 +22,6 @@ def llm_sentence_generate(word: str, translation: str, level: str, language: str
                 "content": (
                     f"Слово: {word}\n"
                     f"Уровень: {level}\n"
-                    f"Перевод: {translation}\n\n"
                     f"Язык на котором надо придумать предложение: {language}"
                     f"Напиши одно естественное предложение с этим словом. Строго на языке которое я написал"
                     f"Ответ — только предложение."
@@ -45,4 +44,4 @@ def llm_sentence_generate(word: str, translation: str, level: str, language: str
 
 
 if __name__ == "__main__":
-    print(llm_sentence_generate("unfortunately", "к сожалению", "B1"))
+    print(llm_sentence_generate("Пельмени", "B1", "Russian"))
