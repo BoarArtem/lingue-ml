@@ -1,8 +1,7 @@
-from gensim.models import KeyedVectors
+from gensim.models import Word2Vec
 
-wv = KeyedVectors.load_word2vec_format(
-    "../inference/crawl-300d-2M.vec",
-    binary=False
-)
+model_path = "word2vec.model"
 
-wv.save("crawl_fasttext.kv")
+model = Word2Vec.load(model_path)
+
+print(model.wv.most_similar(["pizza", "sushi", "coffee", "chocolate", "bread"], topn=10))
