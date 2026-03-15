@@ -1,20 +1,19 @@
 import os
-from groq import Groq
+from openai import OpenAI
 from dotenv import load_dotenv
 
 load_dotenv()
+client = OpenAI(api_key=os.getenv("OPENAI_KEY"))
 
 def llm_sentence_generate(word: str, level: str, language: str) -> str:
-    client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-
-    completion = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
         messages=[
             {
                 "role": "system",
                 "content": (
-                    "Ты генерируешь только одно предложение на нужном языке заданый в промпте. "
-                    "Без пояснений, без форматирования, без лишнего текста."
+                    "Ты генерируешь только одно предложение на нужном указанном языке пользователем, "
+                    "без пояснений, без форматирования, без лишнего текста."
                 )
             },
             {
@@ -22,26 +21,22 @@ def llm_sentence_generate(word: str, level: str, language: str) -> str:
                 "content": (
                     f"Слово: {word}\n"
                     f"Уровень: {level}\n"
-                    f"Язык на котором надо придумать предложение: {language}"
-                    f"Напиши одно естественное предложение с этим словом. Строго на языке которое я написал"
-                    f"Ответ — только предложение."
+                    f"Язык: {language}\n"
+                    "Напиши одно естественное предложение с этим словом. "
+                    "Ответ — строго только одно предложение."
                 )
             }
         ],
         temperature=0.4,
         max_completion_tokens=40,
-        top_p=1,
-        stream=False
+        top_p=1
     )
 
-    result = completion.choices[0].message.content.strip()
+    result = response.choices[0].message.content.strip()
 
     result = result.split("\n")[0]
+
     if "." in result:
         result = result[:result.find(".") + 1]
 
     return result.strip()
-
-
-if __name__ == "__main__":
-    print(llm_sentence_generate("Пельмени", "B1", "Russian"))
