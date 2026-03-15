@@ -39,4 +39,5 @@ def llm_sentence_generate(word: str, level: str, language: str) -> str:
     if "." in result:
         result = result[:result.find(".") + 1]
 
+
     return result.strip()
