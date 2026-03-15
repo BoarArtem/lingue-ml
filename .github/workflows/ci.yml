@@ -25,6 +25,9 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
+    - name: Install spaCy French model
+      run: python -m spacy download fr_core_news_sm
+
     - name: Run tests
       run: |
         pytest -v tests/
