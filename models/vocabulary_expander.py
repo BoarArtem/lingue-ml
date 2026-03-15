@@ -2,6 +2,7 @@ from pathlib import Path
 from gensim.models import Word2Vec
 from data.tokenizer import vocabulary_expander_corpus
 
+
 class VocabularyExpander:
 
     def __init__(self, vector_size, window, min_count, workers):
@@ -9,6 +10,7 @@ class VocabularyExpander:
         self.window = window
         self.min_count = min_count
         self.workers = workers
+        self.model = None
 
     def training(self):
         corpus = vocabulary_expander_corpus()
@@ -26,7 +28,5 @@ class VocabularyExpander:
 
         model.save(str(model_path))
 
+        self.model = model
         return model
-
-vocabulary_expander_model = VocabularyExpander(200, 5, 3, 4)
-model = vocabulary_expander_model.training()
