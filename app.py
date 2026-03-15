@@ -8,7 +8,7 @@ import os
 
 from models.b2_predictor import B2PredictorModel
 from models.llm_sentence_generate import llm_sentence_generate
-from models.llm_word_level import llm_world_level
+from models.llm_word_level import llm_word_level
 from data.tokenizer import (
     sentence_preprocess_english,
     sentence_preprocess_russian,
@@ -37,7 +37,7 @@ ML сервис для Linguo.
 model_dir = os.getenv("MODEL_DIR", "/models")
 ve_model = Word2Vec.load(f"{model_dir}/word2vec.model")
 
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+client = Groq(api_key=os.getenv("OPENAI_KEY"))
 
 try:
     predictor: B2PredictorModel = joblib.load("inference/b2_model.pkl")
@@ -126,7 +126,7 @@ A1, A2, B1, B2, C1, C2
     response_description="Уровень CEFR"
 )
 def word_level(req: WordLevelRequest):
-    result = llm_world_level(
+    result = llm_word_level(
         req.word,
         req.translation
     )
