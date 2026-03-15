@@ -1,35 +1,25 @@
 import os
-import re
-from groq import Groq
+from openai import OpenAI
 from dotenv import load_dotenv
+import json
 
 load_dotenv()
+client = OpenAI(api_key=os.getenv("OPENAI_KEY"))
 
-
-def llm_world_level(word: str, translation: str) -> str:
-    client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-
-    completion = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
+def llm_word_level(word: str, translation: str) -> str:
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
         messages=[
-            {
-                "role": "system",
-                "content": (
-                    "Ты определяешь уровень CEFR слова. "
-                    "Отвечай только одним значением: A1, A2, B1, B2, C1 или C2. "
-                    "Никаких других слов."
-                )
-            },
-            {
-                "role": "user",
-                "content": f"Слово: {word}\nПеревод: {translation}\nУровень CEFR:"
-            }
+            {"role": "system", "content": "Ты определяешь уровень CEFR слова."},
+            {"role": "user", "content": f"Слово: {word}\nПеревод: {translation}\nОтвечай строго JSON: {{'level':'A1/A2/B1/B2/C1/C2'}}"}
         ],
-        temperature=0,
-        max_completion_tokens=5
+        max_completion_tokens=20
     )
 
-    result = completion.choices[0].message.content.strip()
+    text = response.choices[0].message.content.strip()
+    try:
+        data = json.loads(text.replace("'", '"'))
+        return data.get("level", "Unknown")
+    except json.JSONDecodeError:
+        return "Unknown"
 
-    match = re.search(r"(A1|A2|B1|B2|C1|C2)", result)
-    return match.group(1) if match else "Unknown"
