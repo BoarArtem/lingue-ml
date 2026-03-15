@@ -11,7 +11,16 @@ def test_vocabulary_expander_returns():
         ("banana", 0.95),
     ]
 
-    ve = VocabularyExpander(fake_wv)
+    ve = VocabularyExpander(
+        vector_size=100,
+        window=5,
+        min_count=1,
+        workers=1
+    )
+
+    ve.model = MagicMock()
+    ve.model.wv = fake_wv
+
     result = ve.expand(["fruit"], topn=10)
 
     assert isinstance(result, list)
