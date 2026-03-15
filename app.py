@@ -2,7 +2,7 @@ import joblib
 import pandas as pd
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
-from gensim.models import KeyedVectors
+from gensim.models import Word2Vec
 from groq import Groq
 import os
 
@@ -35,7 +35,7 @@ ML сервис для Linguo.
 )
 
 model_dir = os.getenv("MODEL_DIR", "/models")
-ve_model = KeyedVectors.load(f"{model_dir}/crawl_fasttext.kv")
+ve_model = Word2Vec.load(f"{model_dir}/word2vec.model")
 
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
@@ -99,18 +99,9 @@ class PreprocessRequest(BaseModel):
     response_description="Список похожих слов"
 )
 def similar(req: SimilarRequest):
-    valid_words = [w for w in req.arr if w in ve_model]
+    result = ve_model.wv.most_similar(req.arr, topn=req.topn)
 
-    if not valid_words:
-        return {"result": []}
-
-    try:
-        result = ve_model.most_similar(valid_words, topn=req.topn)
-        return {"result": result}
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
+    return result
 
 @app.post(
     "/word_level",
