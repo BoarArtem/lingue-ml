@@ -12,9 +12,9 @@ s3 = boto3.client(
 )
 
 files = [
-    "crawl_fasttext.kv",
-    "crawl-300d-2M.vec",
-    "crawl_fasttext.kv.vectors.npy"
+    "word2vec.model",
+    "word2vec.model.syn1neg.npy",
+    "word2vec.model.wv.vectors.npy"
 ]
 
 
