@@ -28,6 +28,12 @@ jobs:
     - name: Install spaCy French model
       run: python -m spacy download fr_core_news_sm
 
+    - name: Install spaCy Spanish model
+      run: python -m spacy download es_core_news_sm
+
+    - name: Install spaCy German model
+      run: python -m spacy download de_core_news_sm
+
     - name: Run tests
       run: |
         pytest -v tests/
