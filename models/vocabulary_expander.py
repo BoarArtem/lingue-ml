@@ -30,3 +30,9 @@ class VocabularyExpander:
 
         self.model = model
         return model
+
+    def expand(self, words: list[str], topn: int = 10):
+        if self.model is None:
+            raise ValueError("Model not loaded")
+
+        return self.model.wv.most_similar(words, topn=topn * 3)
