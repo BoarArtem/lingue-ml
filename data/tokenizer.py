@@ -25,7 +25,7 @@ nlp_de = spacy.load("de_core_news_sm")
 BASE_DIR = Path(__file__).resolve().parent
 
 DATASET_PATH = BASE_DIR / "datasets" / "english_corpus.txt"
-RUSSIAN_DATASET_PATH = BASE_DIR / "datasets" / "subtitles_ru.txt"
+#RUSSIAN_DATASET_PATH = BASE_DIR / "datasets" / "subtitles_ru.txt"
 
 def get_wordnet_pos(treebank_tag):
     if treebank_tag.startswith('J'):
@@ -141,20 +141,20 @@ def vocabulary_expander_corpus():
 
     return sentences
 
-def vocabulary_expander_russian():
-    sentences = []
-
-    with open(RUSSIAN_DATASET_PATH, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.lower().strip()
-
-            if not line:
-                continue
-
-            line = re.sub(r"[^a-z\s]", "", line)
-            tokens = line.split()
-
-            if len(tokens) > 2:
-                sentences.append(tokens)
-
-    return sentences
+# def vocabulary_expander_russian():
+#     sentences = []
+#
+#     with open(RUSSIAN_DATASET_PATH, "r", encoding="utf-8") as f:
+#         for line in f:
+#             line = line.lower().strip()
+#
+#             if not line:
+#                 continue
+#
+#             line = re.sub(r"[^a-z\s]", "", line)
+#             tokens = line.split()
+#
+#             if len(tokens) > 2:
+#                 sentences.append(tokens)
+#
+#     return sentences
