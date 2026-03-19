@@ -11,5 +11,5 @@ Linguo Machine Learning... один из самых потужних сфер в
 Мы очень довольны продуктивной роботой на ML-side и продолжаем удивлять наших ребят новыми результатами!
 
 Как запустить?
-1) docker pull fanest1i/lingue-ml-ml-service:latest
-2) docker run -p 8000:8000 --env-file .env -v lingue-ml-models:/models --name lingue-ml fanest1i/lingue-ml-ml-service:latest
+1) docker pull fanest1i/linguo-image-ml-service:latest
+2) docker run -p 8000:8000 --env-file .env -v linguo-ml-models:/models --name linguo-ml fanest1i/linguo-image-ml-service:latest
