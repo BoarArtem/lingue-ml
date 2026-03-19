@@ -12,9 +12,9 @@ s3 = boto3.client(
 )
 
 files = [
-    "word2vec.model",
-    "word2vec.model.syn1neg.npy",
-    "word2vec.model.wv.vectors.npy"
+    "russian_word2vec.model",
+    "russian_word2vec.model.syn1neg.npy",
+    "russian_word2vec.model.wv.vectors.npy"
 ]
 
 
