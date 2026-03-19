@@ -3,7 +3,7 @@ version: "3.9"
 services:
   ml-service:
     build: .
-    container_name: lingue-ml-service
+    container_name: linguo-ml-service
     ports:
       - "8000:8000"
     environment:
