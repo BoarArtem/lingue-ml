@@ -11,7 +11,7 @@ import pymorphy3
 from razdel import tokenize
 import spacy
 import jieba
-from preprocess import spam_classification_preprocess
+from data.preprocess import spam_classification_preprocess
 
 
 morph = pymorphy3.MorphAnalyzer()
