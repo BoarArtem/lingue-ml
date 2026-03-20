@@ -1,21 +1,18 @@
 import nltk
+from fontTools.varLib.models import subList
 from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import wordnet
 from nltk import pos_tag
-
 from pathlib import Path
-
 import pandas as pd
-
 import re
-
 import pymorphy3
 from razdel import tokenize
-
 import spacy
-
 import jieba
+from data.preprocess import spam_classification_preprocess
+
 
 morph = pymorphy3.MorphAnalyzer()
 nlp_es = spacy.load("es_core_news_sm")
@@ -139,3 +136,19 @@ def vocabulary_expander_corpus():
 
     return sentences
 
+def spam_classification_tokenizer():
+    data = spam_classification_preprocess("datasets/spam_Emails_data.csv")
+
+    texts = data['text']
+
+    # tokenization
+    tokens_par_text = [word_tokenize(s) for s in texts]
+    tokens = [word for sublist in tokens_par_text for word in sublist]
+
+    return tokens
+
+    # Исправить - TypeError: expected string or bytes-like object, got 'float'
+
+
+# if __name__ == "__main__":
+#     print(spam_classification_tokenizer())
