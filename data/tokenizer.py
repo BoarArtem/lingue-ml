@@ -1,3 +1,6 @@
+import os
+import pickle
+
 import nltk
 from fontTools.varLib.models import subList
 from nltk.tokenize import word_tokenize
@@ -13,6 +16,7 @@ import spacy
 import jieba
 from data.preprocess import spam_classification_preprocess
 
+CACHE_PATH = "tokens_cache.pkl"
 
 morph = pymorphy3.MorphAnalyzer()
 nlp_es = spacy.load("es_core_news_sm")
@@ -119,6 +123,9 @@ def sentence_preprocess_chinese(sentence: str) -> list[str]:
     return tokens
 
 def vocabulary_expander_corpus():
+    """
+    :return: Возвращает очищенные предложения
+    """
     sentences = []
 
     with open(DATASET_PATH, "r", encoding="utf-8") as f:
@@ -137,18 +144,24 @@ def vocabulary_expander_corpus():
     return sentences
 
 def spam_classification_tokenizer():
-    data = spam_classification_preprocess("datasets/spam_Emails_data.csv")
+    """
+    :return: Возвращает список токенов для каждого предложения
+    """
+    if os.path.exists(CACHE_PATH):
+        with open(CACHE_PATH, "rb") as f:
+            return pickle.load(f)
 
-    texts = data['text']
+    data = spam_classification_preprocess(" datasets/spam_Emails_data.csv")
+    texts = data['text'].fillna("")
 
     # tokenization
-    tokens_par_text = [word_tokenize(s) for s in texts]
-    tokens = [word for sublist in tokens_par_text for word in sublist]
+    tokens_par_text = [word_tokenize(str(s)) for s in texts]
 
-    return tokens
+    with open(CACHE_PATH, "wb") as f:
+        pickle.dump(tokens_par_text, f)
 
-    # Исправить - TypeError: expected string or bytes-like object, got 'float'
+    return tokens_par_text
 
 
-# if __name__ == "__main__":
-#     print(spam_classification_tokenizer())
+if __name__ == "__main__":
+    print(spam_classification_tokenizer())
