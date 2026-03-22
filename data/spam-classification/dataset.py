@@ -25,3 +25,10 @@ encoded_text = [
 # pad sequence
 padded = pad_sequence(encoded_text, batch_first=True, padding_value=0)
 
+# embedding
+embedding = torch.nn.Embedding(
+    num_embeddings=len(vocab) + 1,
+    embedding_dim=128,
+    padding_idx=0
+)
+
