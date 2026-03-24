@@ -151,7 +151,7 @@ def spam_classification_tokenizer():
         with open(CACHE_PATH, "rb") as f:
             return pickle.load(f)
 
-    data = spam_classification_preprocess(" datasets/spam_Emails_data.csv")
+    data = spam_classification_preprocess("datasets/spam_Emails_data.csv")
     texts = data['text'].fillna("")
 
     # tokenization
