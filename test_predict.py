@@ -1,19 +1,20 @@
-# test_predict.py
-# Проверка работы классификатора Lingue
+import sys
+import os
 
-from models.words_classifier import predict  
+sys.path.append(os.path.abspath("lingue-ml"))
 
-def main():
-    print("Тестируем модель Lingue")
-    while True:
-        text = input("Введи слово или тему (для выхода '0'): ").strip()
-        if text.lower() == '0':
-            break
-        try:
-            result = predict(text)  
-            print(f"Слово '{text}' относится к теме: {result}\n")
-        except Exception as e:
-            print(f"Ошибка при предсказании: {e}\n")
+from inference.topic_predictor import TopicPredictor
 
-if __name__ == "__main__":
-    main()
+clf = TopicPredictor()
+
+tests = [
+    "I love pizza",
+    "My dog is amazing",
+    "We booked a hotel",
+    "I have a meeting today",
+    "I play football",
+    "Dinner with my family"
+]
+
+for t in tests:
+    print(f"{t} -> {clf.predict(t)}")

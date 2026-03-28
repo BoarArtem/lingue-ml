@@ -6,10 +6,11 @@ import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from data.datasets.dataset_classifier import texts, labels
+from data.datasets.topic_dataset import generate_dataset
 
 
 def train():
+    texts, labels = generate_dataset(50)
     print("Training topic model...")
 
     vectorizer = TfidfVectorizer(
@@ -23,8 +24,10 @@ def train():
     model = LogisticRegression(max_iter=200)
     model.fit(X, labels)
 
-    joblib.dump(model, "lingue-ml/inference/topic_model.pkl")
-    joblib.dump(vectorizer, "lingue-ml/inference/topic_vectorizer.pkl")
+    BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+
+    joblib.dump(model, os.path.join(BASE_DIR, "inference", "topic_model.pkl"))
+    joblib.dump(vectorizer, os.path.join(BASE_DIR, "inference", "topic_vectorizer.pkl"))
 
     print("Topic model trained!")
     
