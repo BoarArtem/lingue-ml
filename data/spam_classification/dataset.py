@@ -95,6 +95,6 @@ loader = DataLoader(
 #     padding_idx=0
 # )
 #
-# emb = embedding(X)
+emb = embedding(X)
 # print(emb)
 
