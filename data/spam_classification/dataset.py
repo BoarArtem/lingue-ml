@@ -7,12 +7,12 @@ from torch.utils.data import Dataset, DataLoader
 
 from data.preprocess import spam_classification_preprocess
 
-data = spam_classification_preprocess("../datasets/spam_Emails_data.csv")
+data = spam_classification_preprocess("../data/datasets/spam_Emails_data.csv")
 
 X = data['text']
 y = data['label']
 
-with open("../tokens_cache.pkl", "rb") as f:
+with open("../data/tokens_cache.pkl", "rb") as f:
     tokens = pickle.load(f)
 
 all_tokens = [w for text in tokens for w in text]
@@ -97,4 +97,3 @@ loader = DataLoader(
 #
 # emb = embedding(X)
 # print(emb)
-
