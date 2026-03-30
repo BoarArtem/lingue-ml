@@ -19,15 +19,15 @@ def encode_text(text, vocab, max_len):
 
     return torch.tensor(encoded).unsqueeze(0)
 
-text = "sdfasfdfa drug killers"
+text = "DRUGS DRUGS MONEY FUCK YOU 1488"
 
 x = encode_text(text, vocab, max_len=128)
 x = x.long().to(device)
 
 with torch.no_grad():
     logits = model(x)
-    probs = torch.softmax(logits, dim=1)
-    pred = torch.argmax(probs, dim=1)
+    probs = torch.softmax(logits, dim=-1)
+    pred = torch.argmax(probs, dim=-1)
 
 print("Class:", pred.item())
 print("Probabilities:", probs.tolist())
