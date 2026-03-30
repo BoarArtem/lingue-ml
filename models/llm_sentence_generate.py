@@ -1,5 +1,4 @@
 import os
-from openai import OpenAI
 from langchain_ollama import ChatOllama
 from langchain_core.messages import HumanMessage, SystemMessage
 from dotenv import load_dotenv
