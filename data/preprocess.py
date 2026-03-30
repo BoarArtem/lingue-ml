@@ -1,3 +1,4 @@
+'''Летимизация и токенизация'''
 import re
 import nltk
 from nltk.tokenize import word_tokenize
@@ -6,7 +7,7 @@ from nltk.corpus import stopwords
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-# Скачиваем нужные пакеты (если еще не скачаны)
+
 nltk.download('punkt')
 nltk.download('wordnet')
 nltk.download('stopwords')
@@ -38,5 +39,18 @@ def preprocess_text_for_classifier(text):
     ]
 
     
+    return " ".join(clean_tokens)
+
+
+def clean_text(text: str) -> str:
+    text = text.lower()
+    text = re.sub(r"[^a-z\s]", "", text)
+    tokens = word_tokenize(text)
+    
+    clean_tokens = [
+        lemmatizer.lemmatize(word) 
+        for word in tokens 
+        if word not in stop_words
+    ]
     return " ".join(clean_tokens)
 

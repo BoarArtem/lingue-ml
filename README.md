@@ -49,3 +49,54 @@ pip install -r requirements.txt
 Запустите инференс:
 python lingue-ml/inference/predict_b2.py
 (Скрипт использует предварительно обученную модель b2_model.pkl)
+
+Lingo ML: Topic Classifier
+
+Модуль машинного обучения для проекта Lingo (приложение для изучения английского языка). 
+Этот микросервис классифицирует английские предложения по 20 базовым темам (Work, Health, Travel, Finance и т.д.), чтобы понимать контекст фраз пользователей.
+
+ Описание задачи:
+
+Нашей целью было создать легкий, быстрый и автономный ML-классификатор. 
+
+Архитектура проекта
+`data/datasets/topic_dataset.py` — Генератор синтетического датасета. На основе шаблонов и словарей создает сбалансированный набор данных
+`data/preprocess.py` — Модуль очистки текста. Содержит функцию `clean_text()`, которая приводит текст к нижнему регистру, токенизирует и лемматизирует его.
+`models/train_model.py` — Скрипт обучения пайплайна (`TfidfVectorizer` + `LogisticRegression`). Отвечает за тренировку модели и сохранение её в `.pkl`.
+`inference/topic_predictor.py` — Главный интерфейс (API) для работы с моделью. Реализует паттерн *Lazy Loading* и выдает предсказания с процентом уверенности модели.
+
+
+Локальный запуск:
+
+Чтобы развернуть проект на своем компьютере, выполните следующие шаги:
+
+1. Подготовка окружения
+
+Убедитесь, что у вас активировано виртуальное окружение, и установите зависимости:
+
+pip install pandas scikit-learn nltk joblib
+
+2. Генерация датасета
+Если датасета нет или его нужно сделать заново:
+
+python data/datasets/topic_dataset.py
+
+(В папке `data/datasets/` появится файл `topic_dataset.csv` на 10 000 строк).
+
+3. Запуск предиктора:
+
+python inference/topic_predictor.py
+
+
+
+Чтобы классифицировать текст в любой части вашего приложения, импортируйте класс `TopicPredictor`:
+
+from inference.topic_predictor import TopicPredictor
+
+predictor = TopicPredictor()
+
+text = "My credit card was declined at the bank."
+topic, confidence = predictor.predict(text)
+
+print(f"Тема: {topic}")
+print(f"Уверенность: {confidence:.2f}%")
