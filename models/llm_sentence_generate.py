@@ -5,7 +5,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from dotenv import load_dotenv
 
 load_dotenv()
-client = ChatOllama(model="gemma3:1b", temperature=0)
+client = ChatOllama(model=os.getenv("OLLAMA_MODEL_NAME"), temperature=0)
 
 def llm_sentence_generate(word: str, level: str, language: str) -> str:
     response = client.invoke([
