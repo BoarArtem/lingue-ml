@@ -9,12 +9,20 @@ client = ChatOllama(model=os.getenv("OLLAMA_MODEL_NAME"), temperature=0, num_pre
 
 def llm_word_level(word: str, translation: str) -> str:
     response = client.invoke([
-        SystemMessage(content=[f"Ты определяешь уровень CEFR слова. \nОтвечай строго JSON: {{'level':'A1/A2/B1/B2/C1/C2'}}",
-                      "Ответ должен быть подан без будь каких символов, кроме - {'level': 'A1/A2/B1/B2/C1/C2'}"]),
+        SystemMessage(content=[
+            "Ты определяешь уровень CEFR для английского слова. "
+            "Выбери ОДИН наиболее подходящий уровень: A1, A2, B1, B2, C1 или C2. "
+            "Отвечай строго в формате JSON с одним полем. "
+            'Пример правильного ответа: {"level": "B1"}. '
+            "Запрещено указывать несколько уровней через слэш или запятую. "
+            "Только один уровень в поле level."
+        ]),
         HumanMessage(content=f"Слово: {word}\nПеревод: {translation}")
     ])
 
     text = response.content
+    if text.startswith("```json"):
+        text = text.replace("```json", "").replace("```", "").strip()
 
     try:
         data = json.loads(text.replace("'", '"'))
