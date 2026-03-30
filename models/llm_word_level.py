@@ -9,14 +9,17 @@ client = ChatOllama(model=os.getenv("OLLAMA_MODEL_NAME"), temperature=0, num_pre
 
 def llm_word_level(word: str, translation: str) -> str:
     response = client.invoke([
-        SystemMessage(content=[
-            "Ты определяешь уровень CEFR для английского слова. "
-            "Выбери ОДИН наиболее подходящий уровень: A1, A2, B1, B2, C1 или C2. "
-            "Отвечай строго в формате JSON с одним полем. "
-            'Пример правильного ответа: {"level": "B1"}. '
-            "Запрещено указывать несколько уровней через слэш или запятую. "
-            "Только один уровень в поле level."
-        ]),
+        SystemMessage(content=
+                      "Ты определяешь уровень CEFR для английского слова. "
+                      "Выбери ОДИН наиболее подходящий уровень: A1, A2, B1, B2, C1 или C2. "
+                      "Отвечай строго в формате JSON: {\"level\": \"XX\"}.\n\n"
+                      "Примеры:\n"
+                      "cat / кошка → {\"level\": \"A1\"}\n"
+                      "weather / погода → {\"level\": \"A2\"}\n"
+                      "moreover / более того → {\"level\": \"B2\"}\n"
+                      "ambiguity / неоднозначность → {\"level\": \"C1\"}\n"
+                      "ephemeral / мимолётный → {\"level\": \"C2\"}\n"
+                      ),
         HumanMessage(content=f"Слово: {word}\nПеревод: {translation}")
     ])
 
