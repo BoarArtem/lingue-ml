@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import json
 
 load_dotenv()
-client = ChatOllama(model=os.getenv("OLLAMA_MODEL_NAME"), temperature=0, num_predict=20)
+client = ChatOllama(model=os.getenv("OLLAMA_MODEL_NAME"), temperature=0, num_predict=20, base_url="http://localhost:11434")
 
 def llm_word_level(word: str, translation: str) -> str:
     response = client.invoke([
