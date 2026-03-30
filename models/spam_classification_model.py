@@ -63,5 +63,3 @@ def train(epochs):
     # save model
     torch.save(model.state_dict(), "../inference/spam_classification_model.pth")
 
-if __name__ == "__main__":
-    train(5)
