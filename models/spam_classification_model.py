@@ -44,22 +44,23 @@ epochs = 5
 
 model.train()
 
-for epoch in range(epochs):
-    total_loss = 0
+if __name__ == "__main__":
+    for epoch in range(epochs):
+        total_loss = 0
 
-    for X_batch, y_batch in loader:
-        X_batch = X_batch.to(device).long()
-        y_batch = y_batch.to(device)
+        for X_batch, y_batch in loader:
+            X_batch = X_batch.to(device).long()
+            y_batch = y_batch.to(device)
 
-        logits = model(X_batch)
-        loss = criterion(logits, y_batch)
+            logits = model(X_batch)
+            loss = criterion(logits, y_batch)
 
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
 
-        total_loss += loss.item()
+            total_loss += loss.item()
 
-    print(f"Epoch {epoch+1}, Loss: {total_loss:.4f}")
+        print(f"Epoch {epoch + 1}, Loss: {total_loss:.4f}")
 
-    torch.save(model.state_dict(), 'spam_classification_model.pth')
+        torch.save(model.state_dict(), '../inference/spam_classification_model.pth')
