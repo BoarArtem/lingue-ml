@@ -25,23 +25,6 @@ def b2_time_prediction_preprocess(filepath):
 
     return train_test_split(X, y, test_size=0.2, random_state=42)
 
-
-def preprocess_text_for_classifier(text):
-    
-    text = text.lower()
-    text = re.sub(r"[^a-z\s]", "", text)
-    tokens = word_tokenize(text)
-
-    clean_tokens = [
-        lemmatizer.lemmatize(word) 
-        for word in tokens 
-        if word not in stop_words
-    ]
-
-    
-    return " ".join(clean_tokens)
-
-
 def clean_text(text: str) -> str:
     text = text.lower()
     text = re.sub(r"[^a-z\s]", "", text)

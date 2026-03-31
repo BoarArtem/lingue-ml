@@ -1,4 +1,3 @@
-'''Главный интерфейс для работы с моделью'''
 import os
 import sys
 import joblib
@@ -9,7 +8,7 @@ if root_dir not in sys.path:
     sys.path.append(root_dir)
 
 from models.train_model import train_topic_model
-from data.preprocess import clean_text 
+from data.preprocess import clean_text
 
 class TopicPredictor:
     def __init__(self):
@@ -19,32 +18,28 @@ class TopicPredictor:
 
     def _load_or_train(self):
         if not os.path.exists(self.model_path):
-            print("Модель не найдена")
+            print("Модель не найдена!")
             if not os.path.exists(self.dataset_path):
                 print("Датасет не найден")
                 sys.exit(1)
             train_topic_model()
         return joblib.load(self.model_path)
 
-    def predict(self, text):
+    def predict(self, text: str):
+        """Возвращает предсказанную тему и процент уверенности(для тестов)."""
         clean_str = clean_text(text)
         prediction = self.model.predict([clean_str])[0]
         probabilities = self.model.predict_proba([clean_str])[0]
         confidence = max(probabilities) * 100
         return prediction, confidence
 
-if __name__ == "__main__":
-    
-    predictor = TopicPredictor()
-    
-    test_sentences = [
-        "I need to buy new clothes at the mall.",              # shopping
-        "The doctor prescribed me some medicine for the pain.", # health
-        "Let's go to the beach for our next vacation!",         # travel
-        "My credit card was declined at the bank.",             # finance
-        'I go to gym'             
-    ]
+    def get_topic(self, text: str) -> str:
+        """Возвращает только название темы (без процентов)."""
+        prediction, _ = self.predict(text)
+        return prediction
 
-    for s in test_sentences:
-        topic, conf = predictor.predict(s)
-        print(f"Точность: [{topic.upper()}] ({conf:.1f}%) -> '{s}'")
+    def get_topics(self, sentences: list) -> list:
+        """Принимает список фраз, возвращает список тем для каждой (для API)."""
+        cleaned_sentences = [clean_text(text) for text in sentences]
+        predictions = self.model.predict(cleaned_sentences)
+        return predictions.tolist()
