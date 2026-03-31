@@ -9,6 +9,7 @@ import os
 from models.b2_predictor import B2PredictorModel
 from models.llm_sentence_generate import llm_sentence_generate
 from models.llm_word_level import llm_word_level
+from models.llm_correct_paragraph import correct_paragraph, get_changed_word
 from data.tokenizer import (
     sentence_preprocess_english,
     sentence_preprocess_russian,
@@ -31,10 +32,11 @@ ML сервис для Linguo.
 • ML предсказания  
 • preprocessing текста  
 """,
-    version="2.7.1"
+    version="v2.9.3"
 )
 
-model_dir = os.getenv("MODEL_DIR", "/models")
+model_dir = os.getenv("MODEL_DIR", "/models") # for docker testing/production
+# ve_model = Word2Vec.load(f"{model_dir}/word2vec.model") - for my local testing
 ve_model = Word2Vec.load(f"{model_dir}/word2vec.model")
 
 client = Groq(api_key=os.getenv("OPENAI_KEY"))
@@ -86,6 +88,8 @@ class PreprocessRequest(BaseModel):
     sentence: str = Field(example="Dogs are running in the park")
     language: str = Field(example="en")
 
+class CorrectParagraphRequest(BaseModel):
+    user_sentence: str = Field(example="I ate pizza yesterday")
 
 @app.post(
     "/similar",
@@ -245,3 +249,26 @@ def preprocess(req: PreprocessRequest):
 
     if req.language == "ch":
         return sentence_preprocess_chinese(req.sentence)
+
+
+@app.post(
+    "/correct_paragraph",
+    tags=["LLM"],
+    summary="Исправление ошибок в предложение пользователя",
+    description="""
+    Пользователь при создании карточки может с помощью ИИ проверить на правильность написания предложения (грамматика или пунктуация)
+    """,
+    response_description="Объект в котором возвращаеться исправленое предложение, массив правильных слов которое написало ИИ и массив неправильных слов с ошибками или пунктуация"
+)
+def correct_paragraph_checking(req: CorrectParagraphRequest):
+    correct_sentence = correct_paragraph(req.user_sentence)
+
+    correct_words, incorrect_words = get_changed_word(req.user_sentence, correct_sentence)
+
+    ai_checking = {
+        "correction": correct_sentence,
+        "corrected_word": correct_words,
+        "incorrected_word": incorrect_words
+    }
+
+    return ai_checking
