@@ -4,7 +4,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from dotenv import load_dotenv
 
 load_dotenv()
-client = ChatOllama(model=os.getenv("OLLAMA_MODEL_NAME_QWEN"), temperature=0)
+client = ChatOllama(model=os.getenv("OLLAMA_MODEL_NAME"), temperature=0)
 
 def correct_paragraph(user_sentence):
     response = client.invoke([
