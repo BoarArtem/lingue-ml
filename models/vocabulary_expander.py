@@ -1,32 +1,38 @@
-from gensim.models import KeyedVectors
+from pathlib import Path
+from gensim.models import Word2Vec
+from data.tokenizer import vocabulary_expander_corpus
 
 
 class VocabularyExpander:
-    def __init__(self, wv: KeyedVectors):
-        self.wv = wv
 
-    def expand(self, arr: list[str], topn: int = 20) -> list[tuple[str, float]]:
-        valid_words = [w for w in arr if w in self.wv]
+    def __init__(self, vector_size, window, min_count, workers):
+        self.vector_size = vector_size
+        self.window = window
+        self.min_count = min_count
+        self.workers = workers
+        self.model = None
 
-        if not valid_words:
-            return []
+    def training(self):
+        corpus = vocabulary_expander_corpus()
 
-        results = self.wv.most_similar(valid_words, topn=topn * 3)
+        model = Word2Vec(
+            sentences=corpus,
+            vector_size=self.vector_size,
+            window=self.window,
+            min_count=self.min_count,
+            workers=self.workers
+        )
 
-        cleaned = []
-        for word, score in results:
-            if (
-                word.isalpha()
-                and word.islower()
-                and word not in arr
-                and len(word) > 2
-            ):
-                cleaned.append((word, score))
+        base_dir = Path(__file__).resolve().parent
+        model_path = base_dir / "word2vec.model"
 
-        return cleaned[:topn]
+        model.save(str(model_path))
 
-    @classmethod
-    def load_model(cls):
-        wv = KeyedVectors.load("../inference/crawl_fasttext.kv")
-        return cls(wv)
+        self.model = model
+        return model
 
+    def expand(self, words: list[str], topn: int = 10):
+        if self.model is None:
+            raise ValueError("Model not loaded")
+
+        return self.model.wv.most_similar(words, topn=topn * 3)

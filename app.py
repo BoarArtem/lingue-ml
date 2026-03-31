@@ -1,116 +1,189 @@
 import joblib
 import pandas as pd
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from gensim.models import KeyedVectors
+from pydantic import BaseModel, Field
+from gensim.models import Word2Vec
 from groq import Groq
 import os
-from models.b2_predictor import B2PredictorModel
-app = FastAPI(title="ML Linguo Service")
 
-ve_model = KeyedVectors.load("inference/crawl_fasttext.kv")
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+from models.b2_predictor import B2PredictorModel
+from models.llm_sentence_generate import llm_sentence_generate
+from models.llm_word_level import llm_word_level
+from data.tokenizer import (
+    sentence_preprocess_english,
+    sentence_preprocess_russian,
+    sentence_preprocess_spanish,
+    sentence_preprocess_france,
+    sentence_preprocess_german,
+    sentence_preprocess_chinese
+)
+
+app = FastAPI(
+    title="ML Linguo Service",
+    description="""
+ML сервис для Linguo.
+
+Возможности API:
+
+• поиск похожих слов (FastText embeddings)  
+• определение уровня слова (CEFR)  
+• генерация предложений  
+• ML предсказания  
+• preprocessing текста  
+""",
+    version="2.7.1"
+)
+
+model_dir = os.getenv("MODEL_DIR", "/models")
+ve_model = Word2Vec.load(f"{model_dir}/word2vec.model")
+
+client = Groq(api_key=os.getenv("OPENAI_KEY"))
+
 try:
     predictor: B2PredictorModel = joblib.load("inference/b2_model.pkl")
 except FileNotFoundError:
     predictor = B2PredictorModel()
-    print("Модель еще не обучена. Endpoint будет работать только после обучения")
+    print("Модель еще не обучена")
 
 
 class PredictRequest(BaseModel):
-    features: dict
+    features: dict = Field(
+        ...,
+        example={
+            "emails_sent": 10,
+            "open_rate": 0.42,
+            "click_rate": 0.11
+        }
+    )
+
 
 class SimilarRequest(BaseModel):
-    arr: list[str]
-    topn: int = 10
+    arr: list[str] = Field(
+        ...,
+        description="Список слов для поиска похожих",
+        example=["dog", "cat"]
+    )
+
+    topn: int = Field(
+        default=10,
+        description="Количество похожих слов",
+        example=5
+    )
 
 
 class WordLevelRequest(BaseModel):
-    word: str
-    translation: str
+    word: str = Field(example="nevertheless")
+    translation: str = Field(example="тем не менее")
+
 
 class SentenceRequest(BaseModel):
-    word: str
-    translation: str
-    level: str
+    word: str = Field(example="dog")
+    level: str = Field(example="A1")
+    language: str = Field(example="en | English")
 
-@app.post("/similar")
+
+class PreprocessRequest(BaseModel):
+    sentence: str = Field(example="Dogs are running in the park")
+    language: str = Field(example="en")
+
+
+@app.post(
+    "/similar",
+    tags=["Embeddings"],
+    summary="Поиск похожих слов",
+    description="""
+Возвращает список слов, наиболее похожих на переданные.
+
+Используется **FastText модель** (`gensim KeyedVectors`).
+""",
+    response_description="Список похожих слов"
+)
 def similar(req: SimilarRequest):
-    valid_words = [w for w in req.arr if w in ve_model]
+    result = ve_model.wv.most_similar(req.arr, topn=req.topn)
 
-    if not valid_words:
-        return {"result": []}
+    return result
 
-    try:
-        result = ve_model.most_similar(valid_words, topn=req.topn)
+@app.post(
+    "/word_level",
+    tags=["LLM"],
+    summary="Определить уровень слова CEFR",
+    description="""
+Определяет уровень сложности слова по шкале **CEFR**.
 
-        return {"result": result}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+Используется LLM модель через **Groq API**.
 
-@app.post("/word_level")
+Модель анализирует:
+
+- слово
+- перевод
+
+И возвращает один уровень:
+
+A1, A2, B1, B2, C1, C2
+
+Ответ всегда строка без пояснений.
+""",
+    response_description="Уровень CEFR"
+)
 def word_level(req: WordLevelRequest):
-    completion = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=[
-            {
-                "role": "user",
-                "content": (
-                    f"Ты — эксперт по лингвистике и системе уровней CEFR. "
-                    f"Тебе дано слово на иностранном языке и его перевод. "
-                    f"Определи уровень владения языком (по шкале CEFR), на котором это слово обычно изучается. "
-                    f"Слово: {req.word} "
-                    f"Перевод/значение: {req.translation} "
-                    f"Ответь одним значением из списка: A1, A2, B1, B2, C1, C2. "
-                    f"Никаких пояснений, только уровень."
-                )
-            }
-        ],
-        temperature=0,
-        max_completion_tokens=10
+    result = llm_word_level(
+        req.word,
+        req.translation
     )
 
-    return completion.choices[0].message.content.strip()
+    return result
 
-@app.post("/sentence")
+
+@app.post(
+    "/sentence",
+    tags=["LLM"],
+    summary="Сгенерировать предложение",
+    description="""
+Генерирует одно естественное предложение с заданным словом.
+
+Параметры:
+
+- `word` — слово
+- `level` — уровень CEFR
+- `language` — язык предложения
+
+Ограничения:
+
+• одно предложение  
+• без объяснений  
+• только текст
+""",
+    response_description="Сгенерированное предложение"
+)
 def sentence(req: SentenceRequest):
-    completion = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=[
-            {
-                "role": "system",
-                "content": (
-                    "Ты генерируешь только одно английское предложение. "
-                    "Без пояснений, без форматирования, без лишнего текста."
-                )
-            },
-            {
-                "role": "user",
-                "content": (
-                    f"Слово: {req.word}\n"
-                    f"Уровень: {req.level}\n"
-                    f"Перевод: {req.translation}\n\n"
-                    f"Напиши одно естественное предложение с этим словом. "
-                    f"Ответ — только предложение."
-                )
-            }
-        ],
-        temperature=0.4,
-        max_completion_tokens=40,
-        top_p=1,
-        stream=False
+    result = llm_sentence_generate(
+        req.word,
+        req.level,
+        req.language
     )
 
-    result = completion.choices[0].message.content.strip()
+    return result
 
-    result = result.split("\n")[0]
-    if "." in result:
-        result = result[:result.find(".") + 1]
+@app.post(
+    "/predict",
+    tags=["Machine Learning"],
+    summary="ML предсказание",
+    description="""
+Использует обученную ML модель `B2PredictorModel`.
 
-    return result.strip()
+Шаги:
 
-@app.post("/predict")
+1. принимаются признаки `features`
+2. создаётся pandas DataFrame
+3. проверяются необходимые колонки
+4. вызывается `model.predict`
+
+Если модель не обучена — возвращается ошибка.
+""",
+    response_description="Результат предсказания"
+)
 def predict(req: PredictRequest):
+
     if not predictor.feature_names:
         raise HTTPException(status_code=400, detail="Модель не обучена")
 
@@ -118,13 +191,57 @@ def predict(req: PredictRequest):
         df = pd.DataFrame([req.features])
 
         missing_cols = [c for c in predictor.feature_names if c not in df.columns]
+
         if missing_cols:
-            raise HTTPException(status_code=400, detail=f"Отсутствуют колонки: {missing_cols}")
+            raise HTTPException(
+                status_code=400,
+                detail=f"Отсутствуют колонки: {missing_cols}"
+            )
 
         df = df[predictor.feature_names]
 
         pred = predictor.model.predict(df)[0]
+
         return {"prediction": int(pred)}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post(
+    "/preprocess",
+    tags=["NLP"],
+    summary="Предобработка предложения",
+    description="""
+Нормализует предложение.
+
+Поддерживаемые языки:
+
+- en — English
+- ru — Russian
+- es — Spanish
+- fr — French
+- de — German
+- ch — Chinese
+""",
+    response_description="Токены предложения"
+)
+def preprocess(req: PreprocessRequest):
+
+    if req.language == "en":
+        return sentence_preprocess_english(req.sentence)
+
+    if req.language == "ru":
+        return sentence_preprocess_russian(req.sentence)
+
+    if req.language == "es":
+        return sentence_preprocess_spanish(req.sentence)
+
+    if req.language == "fr":
+        return sentence_preprocess_france(req.sentence)
+
+    if req.language == "de":
+        return sentence_preprocess_german(req.sentence)
+
+    if req.language == "ch":
+        return sentence_preprocess_chinese(req.sentence)

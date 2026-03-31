@@ -3,12 +3,19 @@ version: "3.9"
 services:
   ml-service:
     build: .
-    container_name: lingue-ml-service
+    container_name: linguo-ml-service
     ports:
       - "8000:8000"
     environment:
+      - OLLAMA_MODEL_NAME=${OLLAMA_MODEL_NAME}
       - GROQ_API_KEY=${GROQ_API_KEY}
+      - MODEL_DIR=/models
+      - R2_ENDPOINT=${R2_ENDPOINT}
+      - R2_ACCESS_KEY=${R2_ACCESS_KEY}
+      - R2_SECRET_ACCESS_KEY=${R2_SECRET_ACCESS_KEY}
     volumes:
-      - .:/app
-    command: >
-      uvicorn app:app --host 0.0.0.0 --port 8000
+      - models:/models
+    command: uvicorn app:app --host 0.0.0.0 --port 8000
+
+volumes:
+  models:
