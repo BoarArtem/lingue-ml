@@ -129,9 +129,30 @@ class Tacotron2Encoder(nn.Module):
         )
         self.bi_directional_lstm = nn.LSTM(hidden_size, hidden_size // 2, num_layers=num_layers, bidirectional=True, batch_first=True)
 
+    def forward(self, x):
+        embedded = self.character_embedding(x)
+        conv_out = self.conv1d_combo(embedded)
+        _, (hidden, _) = self.bi_directional_lstm(conv_out)
+
+        return hidden
+
 class Tacotron2Decoder(nn.Module):
-    def __init__(self, input_size, hidden_size=512, voc_size=10000, num_layers=2):
+    def __init__(self, mel_size, hidden_size=512, voc_size=10000, num_layers=2):
         super().__init__()
+
+        self.prenet = PreNet(mel_size, hidden_size)
+        self.lstm = nn.LSTM(hidden_size, hidden_size, num_layers=num_layers, batch_first=True)
+        self.local_sensitive_attention = LocalSensitiveAttention()
+        self.postnet = PostNet(mel_size)
+
+        self.linear_projection = nn.Linear(in_features=hidden_size, out_features=mel_size)
+
+    def forward(self, memory, prev_mel_frame, prev_attention_weights):
+        pass
+
+
+
+
 
 
 
