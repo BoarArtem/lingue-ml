@@ -137,21 +137,89 @@ class Tacotron2Encoder(nn.Module):
         return hidden
 
 class Tacotron2Decoder(nn.Module):
-    def __init__(self, mel_size, hidden_size=512, voc_size=10000, num_layers=2):
+    def __init__(self, mel_size=80, prenet_hidden=256, encoder_out=512, decoder_lstm_hidden=1024, num_layers=2):
         super().__init__()
 
-        self.prenet = PreNet(mel_size, hidden_size)
-        self.lstm = nn.LSTM(hidden_size, hidden_size, num_layers=num_layers, batch_first=True)
-        self.local_sensitive_attention = LocalSensitiveAttention()
+        self.mel_size = mel_size
+        self.decoder_lstm_hidden = decoder_lstm_hidden
+
+        self.prenet = PreNet(mel_size, prenet_hidden)
+        self.lstm = nn.LSTM(prenet_hidden + encoder_out, decoder_lstm_hidden, num_layers=num_layers, batch_first=True)
+
+        self.attention = LocalSensitiveAttention()
+
+        self.mel_projection = nn.Linear(in_features=decoder_lstm_hidden + encoder_out, out_features=mel_size)
+        self.stop_projection = nn.Linear(in_features=decoder_lstm_hidden + encoder_out, out_features=1)
+
         self.postnet = PostNet(mel_size)
 
-        self.linear_projection = nn.Linear(in_features=hidden_size, out_features=mel_size)
+    def forward(self, encoder_outputs, mel_targets=None, max_steps=1000):
+        # encoder outs - [B, T, 512]
 
-    def forward(self, memory, prev_mel_frame, prev_attention_weights):
-        pass
+        batch_size = encoder_outputs.size(0)
+        t_enc = encoder_outputs.size(1)
+        device = encoder_outputs.device
 
+        # Initialize zero prev mels
 
+        prev_mel = torch.zeros((batch_size, self.mel_size), device=device)
+        prev_attention = torch.zeros((batch_size, t_enc), device=device)
+        lstm_hidden = None
 
+        mel_outputs, stop_outputs, attention_weights = [], [], []
+
+        for t in range(max_steps):
+            # PreNet
+            prenet_out = self.prenet(prev_mel)
+
+            # Attention: get context from encoder
+            if lstm_hidden is not None:
+                query = lstm_hidden[0][-1].unsqueeze(1) # [B, 1, 1024], decoder_lstm
+            else:
+                query = torch.zeros((batch_size, 1, self.decoder_lstm_hidden), device=device)
+
+            context, prev_attention = self.attention(query, encoder_outputs, prev_attention)
+
+            # LSTM
+            lstm_input = torch.cat((prenet_out, context), dim=-1) # [B, 1, 768]
+            lstm_out, lstm_hidden = self.lstm(lstm_input, lstm_hidden) # get lstm - [B, 1, 1024]
+
+            # Projections: input = concat(lstm_out, context)
+            proj_input = torch.cat((lstm_out, context), dim=-1) # [B, 1, 1536]
+            mel_frame = self.mel_projection(proj_input) # [B, 1, 80]
+            stop_token = self.stop_projection(proj_input)
+
+            mel_outputs.append(mel_frame)
+            stop_outputs.append(stop_token)
+            attention_weights.append(prev_attention)
+
+            # Teacher forcing during training, autoregressive at inference
+            if mel_targets is not None:
+                prev_mel = mel_targets[:, t:t+1, :]
+            else:
+                prev_mel = mel_frame # apply new mel
+
+                if torch.sigmoid(stop_token) > 0.5:
+                    break
+
+        # Stack all frames
+        mel_outputs = torch.cat(mel_outputs, dim=1) # [B, T_dec, 80]
+        stop_outputs = torch.cat(stop_outputs, dim=1) # [B, T_dec, 1]
+
+        # PostNet residual refinement
+        mel_outputs_post = mel_outputs + self.postnet(mel_outputs)
+
+        return mel_outputs_post, mel_outputs, stop_outputs, attention_weights
+
+class Tacotron2(nn.Module):
+    def __init__(self, input_size, mel_size, prenet_hidden, encoder_out, decoder_lstm_hidden, num_layers):
+        super().__init__()
+        self.encoder = Tacotron2Encoder(input_size, mel_size, prenet_hidden, num_layers)
+        self.decoder = Tacotron2Decoder(mel_size, prenet_hidden, encoder_out, decoder_lstm_hidden, num_layers)
+
+    def forward(self, x):
+        encoder_outputs = self.encoder(x)
+        mel_outputs, mel_outputs_post, stop_outputs, attention_weights = self.decoder(encoder_outputs)
 
 
 
