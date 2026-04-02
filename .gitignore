@@ -11,6 +11,7 @@ data/*.bin
 /inference/*.vec
 /inference/*.kv.vectors.npy
 /inference/word2vec.model.wv.vectors.npy
+/data/datasets/english_corpus.txt
 /inference/word2vec.model
 /inference/word2vec.model.syn1neg.npy
 /data/datasets/spam_Emails_data.csv

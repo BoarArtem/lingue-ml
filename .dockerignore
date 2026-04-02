@@ -22,6 +22,7 @@ inference/*.kv.vectors.npy
 /inference/spam_classification_model.pth
 /data/datasets/spam_Emails_data.csv
 /data/tokens_cache.pkl
+/data/datasets/english_corpus.txt
 
 
 .DS_Store
