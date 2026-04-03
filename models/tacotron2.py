@@ -113,6 +113,81 @@ class LocalSensitiveAttention(nn.Module):
 
         return context_vector.squeeze(1), new_attention_weights
 
+class CausalConv1d(nn.Module):
+    def __init__(self, in_channels, out_channels, kernel_size, dilation):
+        super().__init__()
+        self.padding = (kernel_size - 1) * dilation
+        self.conv = nn.Conv1d(in_channels, out_channels,
+                              kernel_size=kernel_size, padding=self.padding,
+                              dilation=dilation)
+
+    def forward(self, x):
+        # causal conv - ensures no future context is used in the convolution
+        out = self.conv(x)
+        return out[:, :, :-self.padding] # remove future context
+
+class ResidualBlock(nn.Module):
+    def __init__(self, channels, dilation):
+        super().__init__()
+        self.filter_conv = CausalConv1d(channels, channels, kernel_size=2, dilation=dilation)
+        self.gate_conv = CausalConv1d(channels, channels, kernel_size=2, dilation=dilation)
+
+        self.residual = nn.Conv1d(channels, channels, kernel_size=1)
+        self.skip = nn.Conv1d(channels, channels, kernel_size=1)
+
+    def forward(self, x):
+        # dilated conv -> tanh(dilated_conv) and sigmoid(dilated_conv) multiplication -> shape (1x1)
+        # -> apply residual and out and use skip connections for 1x1
+        filter_out = torch.tanh(self.filter_conv(x))
+        gate_out = torch.sigmoid(self.gate_conv(x))
+
+        out = filter_out * gate_out
+
+        skip = self.skip(out)
+        residual = self.residual(x)
+
+        # residual - take prev output and add that to new one
+        # and skip output - add skip output to next layer
+        return x + residual, skip
+
+class WaveNet(nn.Module):
+    def __init__(self, channels=64, layers=10, stacks=2, quantization=256):
+        super().__init__()
+
+        # WaveNet typically uses niu-law quantization:
+
+        # input shape: (batch, 256, time)
+        # one-hot encoded audio samples
+
+        self.input_conv = nn.Conv1d(quantization, channels, kernel_size=1)
+
+        self.blocks = nn.ModuleList()
+        for _ in range(stacks):
+            for i in range(layers):
+                dilation = 2 ** i
+                self.blocks.append(ResidualBlock(channels, dilation))
+
+        self.output1 = nn.Conv1d(channels, channels, kernel_size=1)
+        self.output2 = nn.Conv1d(channels, quantization, kernel_size=1)
+
+    def forward(self, x):
+        x = self.input_conv(x)
+
+        skip_connections = []
+
+        for block in self.blocks:
+            x, skip = block(x)
+            skip_connections.append(skip) # save skips for later
+
+        out = sum(skip_connections) # sum skips
+
+        out = F.relu(out)
+        out = F.relu(self.output1(out))
+        out = self.output2(out)
+
+        return out
+
+
 class Tacotron2Encoder(nn.Module):
     def __init__(self, input_size, hidden_size=512, voc_size=10000, num_layers=1):
         super().__init__()
@@ -216,11 +291,61 @@ class Tacotron2(nn.Module):
         super().__init__()
         self.encoder = Tacotron2Encoder(input_size, mel_size, prenet_hidden, num_layers)
         self.decoder = Tacotron2Decoder(mel_size, prenet_hidden, encoder_out, decoder_lstm_hidden, num_layers)
+        self.vocoder = WaveNet()
 
     def forward(self, x):
         encoder_outputs = self.encoder(x)
         mel_outputs, mel_outputs_post, stop_outputs, attention_weights = self.decoder(encoder_outputs)
+        vocoder_outputs = self.vocoder(mel_outputs_post)
 
+        return mel_outputs, mel_outputs_post, stop_outputs, attention_weights, vocoder_outputs
 
+class Tacotron2Loss(nn.Module):
+    def __init__(self):
+        super().__init__()
 
+        # Total Loss Formula
+        # Loss = MSE(mel, target)(decoder) + MSE(mel_post, target)(postnet)
+        # + BCE(gate, target)(stop_token)
+        self.mse_loss = nn.MSELoss()
+        self.bce_loss = nn.BCELoss()
 
+    def forward(self, mel_out, mel_out_postnet, gate_out, mel_target, gate_target):
+        # mel_out: [B, T_dec, 80]
+        # mel_out_postnet: [B, T_dec, 80]
+        # mel_target: [B, T_dec, 80]
+
+        # gate_out: [B, T_dec]
+        # gate_target: [B, T_dec]
+
+        # Mel losses
+        mel_loss = self.mse_loss(mel_out, mel_target)
+        mel_post_loss = self.mse_loss(mel_out_postnet, mel_target)
+
+        # Gate loss
+        gate_loss = self.bce_loss(
+            gate_out.view(-1, 1),
+            gate_target.view(-1, 1)
+        )
+
+        # Total loss
+        total_loss = mel_loss + mel_post_loss + gate_loss
+
+        return total_loss, mel_loss, mel_post_loss, gate_loss
+
+def get_tacotron2(input_size, mel_size, prenet_hidden, postnet_hidden):
+    return Tacotron2(input_size, mel_size, prenet_hidden, postnet_hidden, decoder_lstm_hidden=1024, num_layers=2)
+
+def get_tacotron2_loss():
+    return Tacotron2Loss()
+
+def get_optimizer(model, learning_rate):
+    return torch.optim.Adam(model.parameters(), lr=learning_rate)
+
+def train(model, epochs, loss_fn, optimizer, dataloader):
+    model.train()
+
+    total_loss = 0
+
+    # for epoch in range(epochs):
+    #     for
