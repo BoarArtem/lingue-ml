@@ -14,4 +14,6 @@ data/*.bin
 /inference/word2vec.model
 /inference/word2vec.model.syn1neg.npy
 /data/datasets/spam_Emails_data.csv
+/models/tacotron2.py
+/models/llm_correct_paragraph.py
 #/inference/spam_classification_model.pth
