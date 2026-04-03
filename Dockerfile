@@ -14,7 +14,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 
 RUN curl -fsSL https://ollama.com/install.sh | sh
 
-RUN python -m nltk.downloader punkt wordnet omw-1.4 averaged_perceptron_tagger_eng
+RUN python -m nltk.downloader punkt wordnet omw-1.4 stopwords averaged_perceptron_tagger averaged_perceptron_tagger_eng
 RUN python -m spacy download es_core_news_sm
 RUN python -m spacy download fr_core_news_sm
 RUN python -m spacy download de_core_news_sm

@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 from gensim.models import Word2Vec
 from groq import Groq
 import os
+import nltk
 
 from models.b2_predictor import B2PredictorModel
 from models.llm_sentence_generate import llm_sentence_generate
@@ -18,6 +19,11 @@ from data.tokenizer import (
     sentence_preprocess_german,
     sentence_preprocess_chinese
 )
+
+nltk.download('punkt')
+nltk.download('punkt_tab')
+nltk.download('wordnet')
+nltk.download('stopwords')
 
 app = FastAPI(
     title="ML Linguo Service",
