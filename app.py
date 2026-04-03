@@ -48,7 +48,7 @@ ve_model = Word2Vec.load(f"{model_dir}/word2vec.model")
 client = Groq(api_key=os.getenv("OPENAI_KEY"))
 
 try:
-    predictor: B2PredictorModel = joblib.load("inference/b2_model.pkl")
+    predictor: B2PredictorModel = joblib.load(f"{model_dir}/b2_model.pkl")
 except FileNotFoundError:
     predictor = B2PredictorModel()
     print("Модель еще не обучена")
