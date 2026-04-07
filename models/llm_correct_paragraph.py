@@ -31,35 +31,35 @@ def correct_paragraph(user_sentence, iterations=2):
                 2. Core principle (MOST IMPORTANT):
                 - First, determine the corrected sentence (ai_fixed).
                 - Then compare lengths:
-                • If lengths are EQUAL → DO NOT insert "0" at all.
-                • If ai_fixed is LONGER → insert "0" in user_fixed at missing positions.
-                - NEVER insert "0" if it is possible to align tokens by position.
+                • If lengths are EQUAL → DO NOT insert "<ERR>" at all.
+                • If ai_fixed is LONGER → insert "<ERR>" in user_fixed at missing positions.
+                - NEVER insert "<ERR>" if it is possible to align tokens by position.
                 
                 3. Alignment:
                 - user_fixed and ai_fixed MUST have EXACTLY the same number of tokens.
-                - You may ONLY insert "0" tokens into user_fixed.
+                - You may ONLY insert "<ERR>" tokens into user_fixed.
                 - NEVER modify, delete, reorder, or fix original user words in user_fixed.
                 
                 4. Replacement vs insertion:
                 - If a word is incorrect (e.g., "lave" → "love") → this is a REPLACEMENT.
-                - DO NOT insert "0" for replacements.
+                - DO NOT insert "<ERR>" for replacements.
                 - Keep the original word in user_fixed, fix it ONLY in ai_fixed at the same position.
                 
                 5. Zero insertion:
-                - Insert "0" ONLY when a word is completely missing (ai_fixed has an extra token).
-                - "0" can ONLY be inserted between tokens or at boundaries.
-                - Number of "0" tokens MUST exactly equal missing words.
-                - DO NOT insert extra "0"s.
+                - Insert "<ERR>" ONLY when a word is completely missing (ai_fixed has an extra token).
+                - "<ERR>" can ONLY be inserted between tokens or at boundaries.
+                - Number of "<ERR>" tokens MUST exactly equal missing words.
+                - DO NOT insert extra "<ERR>"s.
                 
                 6. NO FIXING USER TEXT:
                 - DO NOT correct spelling, grammar, punctuation, or wording in user_fixed.
                 - DO NOT split or merge tokens.
-                - user_fixed = original tokens + optional "0" only.
+                - user_fixed = original tokens + optional "<ERR>" only.
                 
                 7. Context preservation:
                 - NEVER change or remove any user tokens for context reasons.
                 - Keep user text exactly as provided; context must be preserved.
-                - Only insert "0" if a word is missing according to ai_fixed.
+                - Only insert "<ERR>" if a word is missing according to ai_fixed.
                 
                 8. ai_fixed:
                 - Must be grammatically correct.
@@ -67,14 +67,14 @@ def correct_paragraph(user_sentence, iterations=2):
                 
                 9. Validation (MANDATORY before output):
                 - len(user_fixed_tokens) == len(ai_fixed_tokens)
-                - If lengths were originally equal → there must be ZERO "0" tokens.
-                - Each "0" corresponds to exactly one extra token in ai_fixed.
+                - If lengths were originally equal → there must be ZERO "<ERR>" tokens.
+                - Each "<ERR>" corresponds to exactly one extra token in ai_fixed.
                 - No extra or missing tokens.
                 
                 Examples:
                 
                 Input: I like eat cheese pizza , my dog also  
-                Output: I like 0 eat cheese pizza , my dog also | I like to eat cheese pizza , my dog also  
+                Output: I like <ERR> eat cheese pizza , my dog also | I like to eat cheese pizza , my dog also  
                 
                 Input: I lave youu  
                 Output: I lave youu | I love you  
@@ -92,28 +92,37 @@ def correct_paragraph(user_sentence, iterations=2):
 
     user_fixed_with_correct_zeros = []
 
-    # if len(user_fixed.split()) != len(ai_fixed.split()):
-    #     for user_token in user_fixed.split():
-    #         if user_token.startswith("0"):
-    #             user_fixed = user_fixed.split().remove(user_token)
-    #         else:
-    #             user_fixed_with_correct_zeros.append(user_token)
+    raw_user_tokens = [t for t in user_fixed.split() if t != "<ERR>"]
+    ai_tokens = ai_fixed.split()
 
+    i = 0
+    for ai_token in ai_tokens:
+        if i >= len(raw_user_tokens):
+            user_fixed_with_correct_zeros.append("<ERR>")
+            continue
 
-    if "0" in user_fixed.split():
-        for user_token, ai_token in zip(user_fixed.split(), ai_fixed.split()):
-            if user_token.startswith("0"):
-                if len(list(ai_token)) == 0:
-                    continue
-                else:
-                     
-            else:
-                user_fixed_with_correct_zeros.append(user_token)
+        user_token = raw_user_tokens[i]
+
+        ai_chars = list(ai_token)
+        matching = 0
+        for user_char in user_token:
+            if user_char in ai_chars:
+                matching += 1
+                ai_chars.remove(user_char)
+
+        max_len = max(len(user_token), len(ai_token))
+        if max_len > 0 and matching / max_len > 0.5:
+            user_fixed_with_correct_zeros.append(user_token)
+            i += 1
+        else:
+            user_fixed_with_correct_zeros.append("<ERR>")
+
+    while i < len(raw_user_tokens):
+        user_fixed_with_correct_zeros.append(raw_user_tokens[i])
+        i += 1
 
 
     user_fixed = " ".join(user_fixed_with_correct_zeros)
-
-
 
     return user_fixed, ai_fixed
 
