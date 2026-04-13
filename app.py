@@ -7,6 +7,8 @@ from groq import Groq
 import os
 import nltk
 
+
+from inference.topic_predictor import TopicPredictor
 from models.b2_predictor import B2PredictorModel
 from models.llm_sentence_generate import llm_sentence_generate
 from models.llm_word_level import llm_word_level
@@ -47,12 +49,26 @@ ve_model = Word2Vec.load(f"{model_dir}/word2vec.model")
 
 client = Groq(api_key=os.getenv("OPENAI_KEY"))
 
+# Инициализируем топик-предиктор
+
+try:
+    topic_predictor = TopicPredictor()
+except Exception as e:
+    print(f"Ошибка загрузки TopicPredictor: {e}")
+    topic_predictor = None
+
 try:
     predictor: B2PredictorModel = joblib.load(f"{model_dir}/b2_model.pkl")
 except FileNotFoundError:
     predictor = B2PredictorModel()
     print("Модель еще не обучена")
 
+class TopicRequest(BaseModel):
+    sentences: list[str] = Field(
+        ...,
+        description="Список предложений для определения темы",
+        example=["I love coding in Python", "The football match was intense"]
+    )
 
 class PredictRequest(BaseModel):
     features: dict = Field(
@@ -256,7 +272,23 @@ def preprocess(req: PreprocessRequest):
     if req.language == "ch":
         return sentence_preprocess_chinese(req.sentence)
 
-
+@app.post(
+    "/predict_topics",
+    tags=["Machine Learning"],
+    summary="Определение темы текста",
+    description="Принимает массив строк и возвращает предсказанные темы для каждой из них.",
+    response_description="Массив предсказанных тем"
+)
+def predict_topics(req: TopicRequest):
+    if not topic_predictor:
+        raise HTTPException(status_code=500, detail="Topic model is not initialized")
+    
+    try:
+        results = topic_predictor.get_topics(req.sentences)
+        return {"topics": results}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
 @app.post(
     "/correct_paragraph",
     tags=["LLM"],
