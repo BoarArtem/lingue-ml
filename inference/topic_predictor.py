@@ -16,6 +16,7 @@ class TopicPredictor:
         self.dataset_path = os.path.join(root_dir, "data", "datasets", "topic_dataset.csv")
         self.model = self._load_or_train()
 
+
     def _load_or_train(self):
         if not os.path.exists(self.model_path):
             print("Модель не найдена!")
