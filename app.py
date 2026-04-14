@@ -49,7 +49,6 @@ ve_model = Word2Vec.load(f"{model_dir}/word2vec.model")
 
 client = Groq(api_key=os.getenv("OPENAI_KEY"))
 
-# Инициализируем топик-предиктор
 
 try:
     topic_predictor = TopicPredictor()
