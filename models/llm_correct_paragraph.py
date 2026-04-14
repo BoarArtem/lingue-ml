@@ -2,196 +2,121 @@ import os
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage
 from dotenv import load_dotenv
+import difflib
 import re
 
 load_dotenv()
 client = ChatOpenAI(model=os.getenv("OPENAI_MODEL_NAME"), temperature=0)
 
+def correct_paragraph(user_sentence):
+    response = client.invoke([
+        SystemMessage(content="""Ты — ассистент для исправления грамматических и пунктуационных ошибок в тексте.
 
-def correct_paragraph(user_sentence, iterations=2):
-    """
-    Returns: (user_fixed, ai_fixed)
-    - user_fixed: original tokens (some may be <ERR> if AI couldn't align)
-    - ai_fixed: corrected tokens (with <ERR> for unfixable tokens)
-    """
+Твоя задача:
+1. Исправить все грамматические ошибки (орфография, согласование слов, падежи, времена глаголов и т.д.)
+2. Исправить все пунктуационные ошибки (запятые, точки, тире, кавычки и т.д.)
+3. Вернуть ТОЛЬКО исправленный текст, без комментариев и объяснений
+4. Сохранить исходный стиль и тон сообщения
+5. Не изменять смысл предложения
 
-    best_response = None
+Правила:
+- Если текст уже корректен, верни его без изменений
+- Не добавляй лишних слов или пояснений
+- Не переписывай предложения полностью — исправляй только ошибки
+- Сохраняй форматирование (переносы строк, списки и т.д.)
 
-    for _ in range(iterations):
-        response = client.invoke([
-            SystemMessage(content="""
-You are a grammar correction system. You fix spelling, inflection, and grammar errors while preserving the exact meaning and token structure.
+Примеры:
 
-OUTPUT FORMAT (single line, no explanation):
-<user_tokens> | <corrected_tokens>
+Пользователь: "Я пошол в магазин и купил молако"
+Ты: "Я пошёл в магазин и купил молоко"
 
-CORE RULES:
+Пользователь: "Привет как дела"
+Ты: "Привет, как дела?"
 
-1. TOKENIZATION:
-   - Split by spaces
-   - Punctuation MUST be separate tokens: "hello." → "hello ."
-   - Token count in output MUST equal token count in input
+Пользователь: "Мне нравится этот фильм потому что он интересный"
+Ты: "Мне нравится этот фильм, потому что он интересный"
+"""
+        ),
+        HumanMessage(content=user_sentence),
+    ])
 
-2. LEFT SIDE (user_tokens):
-   - EXACT copy of input tokens
-   - NEVER modify, NEVER add <ERR>
-   - Byte-identical to input
-
-3. RIGHT SIDE (corrected_tokens):
-   - Same token count as left side
-   - Fix spelling: "youu" → "you", "ваду" → "воду"
-   - Fix grammar: "go" → "goes", "школа" → "школу"
-   - Use <ERR> ONLY when token is unfixable (stranded preposition, nonsense word)
-   - NEVER invent new words
-   - NEVER change meaning
-
-4. WHEN TO USE <ERR> (right side only):
-   ✓ Stranded preposition with no object: "под манго" → "под" is <ERR>
-   ✓ Unrecognizable garbage: "xzqwf" → <ERR>
-   ✗ NEVER for simple typos (fix them!)
-   ✗ NEVER for wrong tense (fix it!)
-
-5. LANGUAGE:
-   - Output MUST be same language as input
-   - Russian → Russian, English → English
-   - NEVER translate
-
-6. MEANING PRESERVATION:
-   - Content words (nouns, verbs, adjectives) are SACRED
-   - Only fix spelling/grammar, never swap synonyms
-   - "кушать" stays "кушать", NOT "есть"
-   - "манго" stays "манго", NOT some other word
-
-EXAMPLES:
-
-Input: I lave youu
-Output: I lave youu | I love you
-
-Input: Я люблю кушать под манго
-Output: Я люблю кушать под манго | Я люблю кушать <ERR> манго
-
-Input: she go school every day .
-Output: she go school every day . | she goes school every day .
-
-Input: Я купил ваду пойду в школа
-Output: Я купил ваду пойду в школа | Я купил воду пойду в школу
-
-Input: I want eat at dog .
-Output: I want eat at dog . | I want eat <ERR> dog .
-
-VALIDATION BEFORE OUTPUT:
-1. Count tokens: left == right == input
-2. Left side is byte-identical to input
-3. No invented words on right side
-4. <ERR> only on right side, only for unfixable tokens
-"""),
-            HumanMessage(content=user_sentence),
-        ])
-
-        best_response = response.content.strip()
-
-        # Validate response format
-        if ' | ' not in best_response:
-            continue
-
-        parts = best_response.split(' | ')
-        if len(parts) != 2:
-            continue
-
-        user_part, ai_part = parts
-
-        # Validate token counts
-        input_tokens = user_sentence.split()
-        user_tokens = user_part.split()
-        ai_tokens = ai_part.split()
-
-        if len(user_tokens) == len(ai_tokens) == len(input_tokens):
-            break
-
-    if best_response is None or ' | ' not in best_response:
-        # Fallback: return original
-        return user_sentence, user_sentence
-
-    user_fixed, ai_fixed = best_response.split(' | ', 1)
-    return user_fixed.strip(), ai_fixed.strip()
-
+    return response.content
 
 def tokenize(text):
-    """Tokenize text into words and punctuation"""
     return re.findall(r"\w+|[^\w\s]", text)
 
+def get_changed_word(user_sentence, corrected_sentence):
+    incorrect_changes = []
+    correct_changes = []
 
-def word_pair(user_fixed: str, ai_fixed: str):
-    """
-    Create word pairs for comparison
-    Returns: [(user_token, ai_token), ...]
-    """
-    user_tokens = user_fixed.split()
-    ai_tokens = ai_fixed.split()
+    user_words = tokenize(user_sentence)
+    corrected_words = tokenize(corrected_sentence)
 
-    # Pad shorter list if needed
-    max_len = max(len(user_tokens), len(ai_tokens))
-    user_tokens += [''] * (max_len - len(user_tokens))
-    ai_tokens += [''] * (max_len - len(ai_tokens))
+    matcher = difflib.SequenceMatcher(None, user_words, corrected_words)
 
-    return list(zip(user_tokens, ai_tokens))
+    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
 
+        if tag == "replace":
+            user_part = user_words[i1:i2]
+            correct_part = corrected_words[j1:j2]
 
-def get_corrections(user_fixed: str, ai_fixed: str):
-    """
-    Extract only the changed tokens
-    Returns: [(original, corrected), ...]
-    """
-    corrections = []
+            min_len = min(len(user_part), len(correct_part))
 
-    for user_token, ai_token in word_pair(user_fixed, ai_fixed):
-        if user_token != ai_token and ai_token not in ['', '<ERR>']:
-            corrections.append((user_token, ai_token))
+            for i in range(min_len):
+                incorrect_changes.append(user_part[i])
+                correct_changes.append(correct_part[i])
 
-    return corrections
+            for u in user_part[min_len:]:
+                incorrect_changes.append(u)
+                correct_changes.append("<NONFILL>")
 
+            for c in correct_part[min_len:]:
+                incorrect_changes.append("<NONFILL>")
+                correct_changes.append(c)
 
-def get_errors(user_fixed: str, ai_fixed: str):
-    """
-    Extract tokens marked as <ERR>
-    Returns: [original_token, ...]
-    """
-    errors = []
+        elif tag == "delete":
+            for u in user_words[i1:i2]:
+                incorrect_changes.append(u)
+                correct_changes.append("<NONFILL>")
 
-    for user_token, ai_token in word_pair(user_fixed, ai_fixed):
-        if ai_token == '<ERR>' and user_token:
-            errors.append(user_token)
+        elif tag == "insert":
+            for c in corrected_words[j1:j2]:
+                incorrect_changes.append("<NONFILL>")
+                correct_changes.append(c)
 
-    return errors
+    return incorrect_changes, correct_changes
+
+def check_len(user_sentence_arr, ai_sentence_arr):
+    if len(user_sentence_arr) == len(ai_sentence_arr):
+        return 'Good'
+    else:
+        return 'Not good'
+
+def word_pair(incorrect_list, correct_list):
+    return list(zip(incorrect_list, correct_list))
+
+# if __name__ == "__main__":
+#     user_sentence = "Я лублу кушать вишну и яблко"
+#     ai_sentence = correct_paragraph(user_sentence)
+#
+#     tokenize_user = tokenize(user_sentence)
+#     tokenize_ai = tokenize(ai_sentence)
+#
+#     print("User: ", tokenize_user)
+#     print("AI: ", tokenize_ai)
+#
+#     # print(check_len(tokenize_user, tokenize_ai))
 
 
 if __name__ == "__main__":
+    user_sentence = "Я, кушуя маракую праздную день рождение на Гаити"
+    ai_sentence = correct_paragraph(user_sentence)
 
-    test_sentences = [
-        "Я люблю кушать под манго",
-        "I lave youu",
-        "she go school every day",
-        "Я купил ваду пойду в школа",
-        "I want eat at dog",
-        "Я кушаю яблоко вчора",
-    ]
+    original_user = user_sentence
+    original_ai = ai_sentence
 
-    for sentence in test_sentences:
-        print(f"\n{'=' * 60}")
-        print(f"INPUT: {sentence}")
+    incorrect_words, correct_words = get_changed_word(user_sentence, ai_sentence)
 
-        user_fixed, ai_fixed = correct_paragraph(sentence)
-
-        print(f"USER:  {user_fixed}")
-        print(f"AI:    {ai_fixed}")
-
-        pairs = word_pair(user_fixed, ai_fixed)
-        print(f"PAIRS: {pairs}")
-
-        corrections = get_corrections(user_fixed, ai_fixed)
-        if corrections:
-            print(f"FIXES: {corrections}")
-
-        errors = get_errors(user_fixed, ai_fixed)
-        if errors:
-            print(f"ERRORS: {errors}")
+    print(f"Исходное предложение: {original_user}")
+    print(f"Исправленное предложение: {original_ai}")
+    print(f"Пары изменений: {word_pair(incorrect_words, correct_words)}")
