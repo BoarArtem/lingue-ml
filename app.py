@@ -70,6 +70,14 @@ class TopicRequest(BaseModel):
         example=["I love coding in Python", "The football match was intense"]
     )
 
+class SingleTopicRequest(BaseModel):
+    sentence: str = Field(
+        ...,
+        description="Одно предложение для определения темы",
+        example="I love coding in Python"
+    )
+
+
 class PredictRequest(BaseModel):
     features: dict = Field(
         ...,
@@ -271,7 +279,24 @@ def preprocess(req: PreprocessRequest):
 
     if req.language == "ch":
         return sentence_preprocess_chinese(req.sentence)
-
+@app.post(
+    "/predict_topic",  # Обрати внимание, тут в единственном числе
+    tags=["Machine Learning"],
+    summary="Определение темы для одного предложения",
+    description="Принимает одну строку и возвращает предсказанную тему.",
+    response_description="Предсказанная тема"
+)
+def predict_topic(req: SingleTopicRequest):
+    if not topic_predictor:
+        raise HTTPException(status_code=500, detail="Topic model is not initialized")
+    
+    try:
+        
+        result = topic_predictor.get_topic(req.sentence)
+        return {"topic": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
 @app.post(
     "/predict_topics",
     tags=["Machine Learning"],
