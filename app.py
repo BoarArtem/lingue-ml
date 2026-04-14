@@ -7,7 +7,6 @@ from groq import Groq
 import os
 import nltk
 
-
 from inference.topic_predictor import TopicPredictor
 from models.b2_predictor import B2PredictorModel
 from models.llm_sentence_generate import llm_sentence_generate
@@ -43,12 +42,11 @@ ML сервис для Linguo.
     version="v2.9.3"
 )
 
-model_dir = os.getenv("MODEL_DIR", "/models") # for docker testing/production
+model_dir = os.getenv("MODEL_DIR", "/models")  # for docker testing/production
 # ve_model = Word2Vec.load(f"{model_dir}/word2vec.model") - for my local testing
 ve_model = Word2Vec.load(f"{model_dir}/word2vec.model")
 
 client = Groq(api_key=os.getenv("OPENAI_KEY"))
-
 
 try:
     topic_predictor = TopicPredictor()
@@ -62,12 +60,14 @@ except FileNotFoundError:
     predictor = B2PredictorModel()
     print("Модель еще не обучена")
 
+
 class TopicRequest(BaseModel):
     sentences: list[str] = Field(
         ...,
         description="Список предложений для определения темы",
         example=["I love coding in Python", "The football match was intense"]
     )
+
 
 class SingleTopicRequest(BaseModel):
     sentence: str = Field(
@@ -117,8 +117,10 @@ class PreprocessRequest(BaseModel):
     sentence: str = Field(example="Dogs are running in the park")
     language: str = Field(example="en")
 
+
 class CorrectParagraphRequest(BaseModel):
     user_sentence: str = Field(example="I ate pizza yesterday")
+
 
 @app.post(
     "/similar",
@@ -135,6 +137,7 @@ def similar(req: SimilarRequest):
     result = ve_model.wv.most_similar(req.arr, topn=req.topn)
 
     return result
+
 
 @app.post(
     "/word_level",
@@ -197,6 +200,7 @@ def sentence(req: SentenceRequest):
 
     return result
 
+
 @app.post(
     "/predict",
     tags=["Machine Learning"],
@@ -216,7 +220,6 @@ def sentence(req: SentenceRequest):
     response_description="Результат предсказания"
 )
 def predict(req: PredictRequest):
-
     if not predictor.feature_names:
         raise HTTPException(status_code=400, detail="Модель не обучена")
 
@@ -260,7 +263,6 @@ def predict(req: PredictRequest):
     response_description="Токены предложения"
 )
 def preprocess(req: PreprocessRequest):
-
     if req.language == "en":
         return sentence_preprocess_english(req.sentence)
 
@@ -278,6 +280,8 @@ def preprocess(req: PreprocessRequest):
 
     if req.language == "ch":
         return sentence_preprocess_chinese(req.sentence)
+
+
 @app.post(
     "/predict_topic",  # Обрати внимание, тут в единственном числе
     tags=["Machine Learning"],
@@ -288,14 +292,15 @@ def preprocess(req: PreprocessRequest):
 def predict_topic(req: SingleTopicRequest):
     if not topic_predictor:
         raise HTTPException(status_code=500, detail="Topic model is not initialized")
-    
+
     try:
-        
+
         result = topic_predictor.get_topic(req.sentence)
         return {"topic": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
+
+
 @app.post(
     "/predict_topics",
     tags=["Machine Learning"],
@@ -306,13 +311,14 @@ def predict_topic(req: SingleTopicRequest):
 def predict_topics(req: TopicRequest):
     if not topic_predictor:
         raise HTTPException(status_code=500, detail="Topic model is not initialized")
-    
+
     try:
         results = topic_predictor.get_topics(req.sentences)
         return {"topics": results}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
+
+
 @app.post(
     "/correct_paragraph",
     tags=["LLM"],
