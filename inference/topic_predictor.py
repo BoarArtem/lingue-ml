@@ -7,7 +7,7 @@ root_dir = os.path.dirname(current_dir)
 if root_dir not in sys.path:
     sys.path.append(root_dir)
 
-from models.train_model import train_topic_model
+from models.topic_classifier import train_topic_model
 from data.preprocess import clean_text
 
 class TopicPredictor:
