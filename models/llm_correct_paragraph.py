@@ -35,6 +35,9 @@ def correct_paragraph(user_sentence):
 
 Пользователь: "Мне нравится этот фильм потому что он интересный"
 Ты: "Мне нравится этот фильм, потому что он интересный"
+
+Если написано на одном языке, на том и исправляй.
+В случае если в одном предложении два языка сразу - то посмотри где больше слов, и где будет больше на том и меняй
 """
         ),
         HumanMessage(content=user_sentence),
@@ -44,6 +47,9 @@ def correct_paragraph(user_sentence):
 
 def tokenize(text):
     return re.findall(r"\w+|[^\w\s]", text)
+
+def is_punctuation(token):
+    return re.match(r"[^\w\s]", token)
 
 def get_changed_word(user_sentence, corrected_sentence):
     incorrect_changes = []
@@ -60,28 +66,26 @@ def get_changed_word(user_sentence, corrected_sentence):
             user_part = user_words[i1:i2]
             correct_part = corrected_words[j1:j2]
 
-            min_len = min(len(user_part), len(correct_part))
+            for u, c in zip(user_part, correct_part):
 
-            for i in range(min_len):
-                incorrect_changes.append(user_part[i])
-                correct_changes.append(correct_part[i])
+                if is_punctuation(u) and not is_punctuation(c):
+                    incorrect_changes.append(u)
+                    correct_changes.append("<DELETED>")
 
-            for u in user_part[min_len:]:
-                incorrect_changes.append(u)
-                correct_changes.append("<NONFILL>")
-
-            for c in correct_part[min_len:]:
-                incorrect_changes.append("<NONFILL>")
-                correct_changes.append(c)
+                    incorrect_changes.append("<ADDED>")
+                    correct_changes.append(c)
+                else:
+                    incorrect_changes.append(u)
+                    correct_changes.append(c)
 
         elif tag == "delete":
             for u in user_words[i1:i2]:
                 incorrect_changes.append(u)
-                correct_changes.append("<NONFILL>")
+                correct_changes.append("<DELETED>")
 
         elif tag == "insert":
             for c in corrected_words[j1:j2]:
-                incorrect_changes.append("<NONFILL>")
+                incorrect_changes.append("<ADDED>")
                 correct_changes.append(c)
 
     return incorrect_changes, correct_changes
@@ -109,7 +113,7 @@ def word_pair(incorrect_list, correct_list):
 
 
 if __name__ == "__main__":
-    user_sentence = "Я, кушуя маракую праздную день рождение на Гаити"
+    user_sentence = "Привіт? мене звати Артем Бояр!!!"
     ai_sentence = correct_paragraph(user_sentence)
 
     original_user = user_sentence
