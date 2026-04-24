@@ -1,24 +1,30 @@
 import os
-from langchain_openai import ChatOpenAI
-from langchain_core.messages import HumanMessage, SystemMessage
-from dotenv import load_dotenv
+from openai import OpenAI
 import difflib
 import re
+from dotenv import load_dotenv
 
 load_dotenv()
-client = ChatOpenAI(model=os.getenv("OPENAI_MODEL_NAME"), temperature=0)
+
+client = OpenAI(api_key=os.getenv("OPENAI_KEY"))
 
 def correct_paragraph(user_sentence):
-    response = client.invoke([
-        SystemMessage(content="""Исправь грамматические и пунктуационные ошибки.
-Верни только исправленный текст без объяснений.
-Сохрани смысл и язык оригинала.
-"""
-        ),
-        HumanMessage(content=user_sentence),
-    ])
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {
+                "role": "system",
+                "content": "Исправь грамматические и пунктуационные ошибки. Верни только исправленный текст."
+            },
+            {
+                "role": "user",
+                "content": user_sentence
+            }
+        ],
+        max_tokens=50
+    )
 
-    return response.content
+    return response.choices[0].message.content
 
 def tokenize(text):
     return re.findall(r"\w+|[^\w\s]", text)
@@ -36,6 +42,11 @@ def get_changed_word(user_sentence, corrected_sentence):
     matcher = difflib.SequenceMatcher(None, user_words, corrected_words)
 
     for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+
+        if tag == "equal":
+            for u,c in zip(user_words[i1:i2], corrected_words[j1:j2]):
+                incorrect_changes.append(u)
+                correct_changes.append(c)
 
         if tag == "replace":
             user_part = user_words[i1:i2]
@@ -89,6 +100,7 @@ def word_pair(incorrect_list, correct_list):
 
 if __name__ == "__main__":
     user_sentence = "Привіт? мене звати Артем Бояр!!!"
+    # user_sentence = "Hii? my name was Artem now"
     ai_sentence = correct_paragraph(user_sentence)
 
     original_user = user_sentence
