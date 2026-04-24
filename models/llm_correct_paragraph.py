@@ -1,63 +1,113 @@
 import os
-from langchain_ollama import ChatOllama
-from langchain_core.messages import HumanMessage, SystemMessage
-from dotenv import load_dotenv
+from openai import OpenAI
 import difflib
 import re
+from dotenv import load_dotenv
 
 load_dotenv()
-client = ChatOllama(model=os.getenv("OLLAMA_MODEL_NAME"), temperature=0)
+
+client = OpenAI(api_key=os.getenv("OPENAI_KEY"))
 
 def correct_paragraph(user_sentence):
-    response = client.invoke([
-        SystemMessage(content=(
-            "You are a grammar corrector.",
-            "Correct any grammatical errors and adjust verb tenses according to context.",
-            "Do not change the meaning or words unnecessarily.",
-            "Do not translate.",
-            "Do not add explanations, parentheses, or extra text.",
-            "Always respond in the same language as the input.",
-            "Return ONLY the corrected sentence, nothing else."
-        )),
-        HumanMessage(content=user_sentence),
-    ])
-    return response.content
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {
+                "role": "system",
+                "content": "Исправь грамматические и пунктуационные ошибки. Верни только исправленный текст."
+            },
+            {
+                "role": "user",
+                "content": user_sentence
+            }
+        ],
+        max_tokens=50
+    )
+
+    return response.choices[0].message.content
 
 def tokenize(text):
     return re.findall(r"\w+|[^\w\s]", text)
 
+def is_punctuation(token):
+    return re.match(r"[^\w\s]", token)
+
 def get_changed_word(user_sentence, corrected_sentence):
-    correct_changes = []
     incorrect_changes = []
+    correct_changes = []
 
     user_words = tokenize(user_sentence)
     corrected_words = tokenize(corrected_sentence)
 
-    diff = difflib.ndiff(user_words, corrected_words)
+    matcher = difflib.SequenceMatcher(None, user_words, corrected_words)
 
-    for d in diff:
-        token = d[2:]
+    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
 
-        if d.startswith("+ "):
-            correct_changes.append(token)
-        elif d.startswith("- "):
-            # if re.fullmatch(r"[^\w\s]", token):
-            incorrect_changes.append(token)
+        if tag == "equal":
+            for u,c in zip(user_words[i1:i2], corrected_words[j1:j2]):
+                incorrect_changes.append(u)
+                correct_changes.append(c)
 
-    return correct_changes, incorrect_changes
+        if tag == "replace":
+            user_part = user_words[i1:i2]
+            correct_part = corrected_words[j1:j2]
 
+            for u, c in zip(user_part, correct_part):
+
+                if is_punctuation(u) and not is_punctuation(c):
+                    incorrect_changes.append(u)
+                    correct_changes.append("<DELETED>")
+
+                    incorrect_changes.append("<ADDED>")
+                    correct_changes.append(c)
+                else:
+                    incorrect_changes.append(u)
+                    correct_changes.append(c)
+
+        elif tag == "delete":
+            for u in user_words[i1:i2]:
+                incorrect_changes.append(u)
+                correct_changes.append("<DELETED>")
+
+        elif tag == "insert":
+            for c in corrected_words[j1:j2]:
+                incorrect_changes.append("<ADDED>")
+                correct_changes.append(c)
+
+    return incorrect_changes, correct_changes
+
+def check_len(user_sentence_arr, ai_sentence_arr):
+    if len(user_sentence_arr) == len(ai_sentence_arr):
+        return 'Good'
+    else:
+        return 'Not good'
+
+def word_pair(incorrect_list, correct_list):
+    return list(zip(incorrect_list, correct_list))
+
+# if __name__ == "__main__":
+#     user_sentence = "Я лублу кушать вишну и яблко"
+#     ai_sentence = correct_paragraph(user_sentence)
+#
+#     tokenize_user = tokenize(user_sentence)
+#     tokenize_ai = tokenize(ai_sentence)
+#
+#     print("User: ", tokenize_user)
+#     print("AI: ", tokenize_ai)
+#
+#     # print(check_len(tokenize_user, tokenize_ai))
 
 
 if __name__ == "__main__":
-    user_sentence = "Я! завтра сьел кашу"
-    correct_sentence = correct_paragraph(user_sentence)
+    user_sentence = "Привіт? мене звати Артем Бояр!!!"
+    # user_sentence = "Hii? my name was Artem now"
+    ai_sentence = correct_paragraph(user_sentence)
 
-    correct_words, incorrect_words = get_changed_word(user_sentence, correct_sentence)
+    original_user = user_sentence
+    original_ai = ai_sentence
 
-    ai_checking = {
-        "correction": correct_sentence,
-        "corrected_word": correct_words,
-        "incorrected_word": incorrect_words
-    }
+    incorrect_words, correct_words = get_changed_word(user_sentence, ai_sentence)
 
-    print(ai_checking)
+    print(f"Исходное предложение: {original_user}")
+    print(f"Исправленное предложение: {original_ai}")
+    print(f"Пары изменений: {word_pair(incorrect_words, correct_words)}")
