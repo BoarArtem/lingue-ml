@@ -15,3 +15,5 @@ data/*.bin
 /inference/word2vec.model.syn1neg.npy
 /data/datasets/spam_Emails_data.csv
 #/inference/spam_classification_model.pth
+/data/ljspeech/LJSpeech-1.1/wavs/*.wav
+*.pth

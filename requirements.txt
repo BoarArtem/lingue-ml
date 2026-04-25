@@ -28,3 +28,5 @@ fonttools>=4.0.0
 langchain==1.2.13
 langchain-core==1.2.23
 langchain-ollama==1.0.1
+
+librosa
