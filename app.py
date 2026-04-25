@@ -3,7 +3,7 @@ import pandas as pd
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from gensim.models import Word2Vec
-from groq import Groq
+# from groq import Groq
 import os
 import nltk
 
@@ -11,7 +11,7 @@ from inference.topic_predictor import TopicPredictor
 from models.b2_predictor import B2PredictorModel
 from models.llm_sentence_generate import llm_sentence_generate
 from models.llm_word_level import llm_word_level
-from models.llm_correct_paragraph import correct_paragraph, get_changed_word
+from models.llm_correct_paragraph import correct_paragraph, get_changed_word, word_pair
 from data.tokenizer import (
     sentence_preprocess_english,
     sentence_preprocess_russian,
@@ -43,10 +43,10 @@ ML сервис для Linguo.
 )
 
 model_dir = os.getenv("MODEL_DIR", "/models")  # for docker testing/production
-# ve_model = Word2Vec.load(f"{model_dir}/word2vec.model") - for my local testing
+# ve_model = Word2Vec.load(f"{model_dir}/word2vec.model")# - for my local testing
 ve_model = Word2Vec.load(f"{model_dir}/word2vec.model")
 
-client = Groq(api_key=os.getenv("OPENAI_KEY"))
+# client = Groq(api_key=os.getenv("OPENAI_KEY"))
 
 try:
     topic_predictor = TopicPredictor()
@@ -81,9 +81,18 @@ class PredictRequest(BaseModel):
     features: dict = Field(
         ...,
         example={
-            "emails_sent": 10,
-            "open_rate": 0.42,
-            "click_rate": 0.11
+            'unique_words': 1500,
+            'words_a1': 600,
+            'words_a2': 500,
+            'words_b1': 400,
+            'words_b2': 0,
+            'avg_acc_7d': 0.88,
+            'avg_acc_30d': 0.85,
+            'avg_time_sec': 6.0,
+            'words_day_7d': 30,
+            'words_day_30d': 900,
+            'streak': 20,
+            'sessions_week': 14
         }
     )
 
@@ -329,14 +338,16 @@ def predict_topics(req: TopicRequest):
     response_description="Объект в котором возвращаеться исправленое предложение, массив правильных слов которое написало ИИ и массив неправильных слов с ошибками или пунктуация"
 )
 def correct_paragraph_checking(req: CorrectParagraphRequest):
-    correct_sentence = correct_paragraph(req.user_sentence)
+    user_sentence = req.user_sentence
+    ai_sentence = correct_paragraph(user_sentence)
 
-    correct_words, incorrect_words = get_changed_word(req.user_sentence, correct_sentence)
+    original_user = user_sentence
+    original_ai = ai_sentence
 
-    ai_checking = {
-        "correction": correct_sentence,
-        "corrected_word": correct_words,
-        "incorrected_word": incorrect_words
+    incorrect_words, correct_words = get_changed_word(user_sentence, ai_sentence)
+
+    return {
+        "User sentence": original_user,
+        "AI sentence": original_ai,
+        "Changing pair": word_pair(incorrect_words, correct_words)
     }
-
-    return ai_checking
