@@ -373,6 +373,7 @@ def prepare_dataloader(dataset_path: str, audio_dir_path: str, batch_size: int, 
     return get_dataloader(dataset, batch_size, shuffle)
 
 def train(model, dataloader, epochs, loss_fn, optimizer):
+    model.to(device)
     model.train()
 
     total_loss = 0
