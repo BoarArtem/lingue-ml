@@ -419,7 +419,7 @@ def train(model, dataloader, epochs, loss_fn, optimizer):
 
 if __name__ == '__main__':
     print("Starting training...")
-    model = load_tacotron2("tacotron2_epoch_31.pth")
+    model = load_tacotron2(f"{PROJECT_ROOT}/tacotron2_epoch_31.pth")
     loss_fn = get_tacotron2_loss()
     optimizer = get_optimizer(model, 1e-4)
     dataloader = prepare_dataloader(f'{PROJECT_ROOT}/data/ljspeech/LJSpeech-1.1/metadata.csv',
