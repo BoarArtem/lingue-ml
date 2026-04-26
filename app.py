@@ -1,6 +1,8 @@
 import joblib
 import pandas as pd
+import torch
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from gensim.models import Word2Vec
 # from groq import Groq
@@ -12,6 +14,7 @@ from models.b2_predictor import B2PredictorModel
 from models.llm_sentence_generate import llm_sentence_generate
 from models.llm_word_level import llm_word_level
 from models.llm_correct_paragraph import correct_paragraph, get_changed_word, word_pair
+from inference.spam_classification_inference import spam_or_ham
 from data.tokenizer import (
     sentence_preprocess_english,
     sentence_preprocess_russian,
@@ -20,6 +23,7 @@ from data.tokenizer import (
     sentence_preprocess_german,
     sentence_preprocess_chinese
 )
+from models.spam_classification_model import SpamClassificationModel
 
 nltk.download('punkt')
 nltk.download('punkt_tab')
@@ -42,9 +46,26 @@ ML сервис для Linguo.
     version="v2.9.3"
 )
 
-model_dir = os.getenv("MODEL_DIR", "/models")  # for docker testing/production
-# ve_model = Word2Vec.load(f"{model_dir}/word2vec.model")# - for my local testing
-ve_model = Word2Vec.load(f"{model_dir}/word2vec.model")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+model_dir = os.getenv("MODEL_DIR", "models")  # for docker testing/production
+ve_model = Word2Vec.load(f"{model_dir}/word2vec.model")# - for my local testing
+# ve_model = Word2Vec.load(f"{model_dir}/word2vec.model")
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model = SpamClassificationModel(
+    vocab_size=10000,
+    embed_dim=128,
+    hidden_size=256,
+    num_layers=2,
+).to(device)
+model.load_state_dict(torch.load(f"{model_dir}/spam_classification_model.pth", map_location=device))
+model.eval()
 
 # client = Groq(api_key=os.getenv("OPENAI_KEY"))
 
@@ -129,6 +150,9 @@ class PreprocessRequest(BaseModel):
 
 class CorrectParagraphRequest(BaseModel):
     user_sentence: str = Field(example="I ate pizza yesterday")
+
+class SpamClassificationRequest(BaseModel):
+    user_sentence: str = Field(examples="sex sex drugs drugs gun")
 
 
 @app.post(
@@ -351,3 +375,13 @@ def correct_paragraph_checking(req: CorrectParagraphRequest):
         "AI sentence": original_ai,
         "Changing pair": word_pair(incorrect_words, correct_words)
     }
+
+@app.post(
+    "/spam_classification",
+    tags=["Machine Learning"],
+    summary="Классификация карточки на спам",
+    description="ИИ перед тем как пользователь выложит свою колоду, проходить по каждой карточке и даёт метку (spam | ham), дальше все карточки с пометкой спам удаляют из колоды и оставляют только ham",
+    response_description="Метка класса: spam or ham"
+)
+def spam_classification(req: SpamClassificationRequest):
+    return {'class': spam_or_ham(req.user_sentence)}

@@ -21,7 +21,7 @@ files = [
     "topic_vectorizer.pkl",
     "word2vec.model",
     "word2vec.model.syn1neg.npy",
-    "word2vec.model.wv.vectors.npy"
+    "word2vec.model.wv.vectors.npy",
 ]
 
 

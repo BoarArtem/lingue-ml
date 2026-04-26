@@ -47,7 +47,7 @@ def train(epochs):
 
         for X_batch, y_batch in loader:
             X_batch = X_batch.to(device).long()
-            y_batch = y_batch.to(device)
+            y_batch = y_batch.to(device).long()
 
             logits = model(X_batch)
             loss = criterion(logits, y_batch)
@@ -63,3 +63,6 @@ def train(epochs):
     # save model
     torch.save(model.state_dict(), "../inference/spam_classification_model.pth")
 
+
+if __name__ == "__main__":
+    print(train(10))

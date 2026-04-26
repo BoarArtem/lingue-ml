@@ -1,4 +1,5 @@
 import pickle
+import os
 from collections import Counter
 import torch.nn
 from torch.nn.functional import embedding
@@ -7,12 +8,16 @@ from torch.utils.data import Dataset, DataLoader
 
 from data.preprocess import spam_classification_preprocess
 
-data = spam_classification_preprocess("../data/datasets/spam_Emails_data.csv")
+model_dir = os.getenv("MODEL_DIR", "/models")  # for docker testing/production
+
+# data = spam_classification_preprocess(f"dataset/spam_Emails_data.csv")
+# data = spam_classification_preprocess("datasets/spam_Emails_data.csv") # local testing
 
 X = data['text']
 y = data['label']
 
-with open("../data/tokens_cache.pkl", "rb") as f:
+with open("../data/tokens_cache.pkl", "rb") as f: # local testing
+# with open(f"{model_dir}/tokens_cache.pkl", "rb") as f:
     tokens = pickle.load(f)
 
 all_tokens = [w for text in tokens for w in text]
@@ -97,3 +102,9 @@ loader = DataLoader(
 #
 # emb = embedding(X)
 # print(emb)
+
+if __name__ == "__main__":
+    # Этот код выполнится только при прямом запуске файла
+    data = spam_classification_preprocess("datasets/spam_Emails_data.csv")
+    print(data.head())
+    print(f"Dataset shape: {data.shape}")

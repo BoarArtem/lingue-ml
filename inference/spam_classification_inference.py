@@ -1,6 +1,9 @@
+import os
 import torch
 from models.spam_classification_model import SpamClassificationModel
 from data.spam_classification.dataset import vocab
+
+model_dir = os.getenv("MODEL_DIR", "/models")  # for docker testing/production
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = SpamClassificationModel(
@@ -9,7 +12,7 @@ model = SpamClassificationModel(
     hidden_size=256,
     num_layers=2,
 ).to(device)
-model.load_state_dict(torch.load("spam_classification_model.pth", map_location=device))
+model.load_state_dict(torch.load(f"{model_dir}/spam_classification_model.pth", map_location=device))
 model.eval()
 
 def spam_or_ham(sentence):
@@ -36,6 +39,6 @@ def spam_or_ham(sentence):
 
     return f"Class: {label_map[pred.item()]}"
 
-# if __name__ == "__main__":
-#     print(spam_or_ham("jfgjfddfg fdg sex drugs"))
+if __name__ == "__main__":
+    print(spam_or_ham("My family very love cars"))
 
