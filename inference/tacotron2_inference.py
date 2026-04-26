@@ -4,7 +4,7 @@ import torch
 tacotron2 = load_tacotron2("../models/tacotron2_epoch_1.pth")
 tacotron2.eval()
 
-vocoder = None
+vocoder = torch.hub.load('facebookresearch/wav2vec2', 'wav2vec2_base')
 vocoder.eval()
 
 def decode_mel(mel):
