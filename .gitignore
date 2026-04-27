@@ -17,3 +17,4 @@ data/*.bin
 #/inference/spam_classification_model.pth
 /data/ljspeech/LJSpeech-1.1/wavs/*.wav
 *.pth
+.DS_Store
