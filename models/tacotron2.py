@@ -26,8 +26,8 @@ class PreNet(nn.Module):
         # 0.5 dropout rate - important!
 
     def forward(self, x):
-        x = F.dropout(F.relu(self.fc1(x)), p=0.5, training=self.training)
-        x = F.dropout(F.relu(self.fc2(x)), p=0.5, training=self.training)
+        x = F.dropout(F.relu(self.fc1(x)), p=0.5, training=True)
+        x = F.dropout(F.relu(self.fc2(x)), p=0.5, training=True)
 
         return x
 
@@ -243,7 +243,7 @@ class Tacotron2Decoder(nn.Module):
 
         self.postnet = PostNet(mel_size)
 
-    def forward(self, encoder_outputs, mel_targets=None, max_steps=1000):
+    def forward(self, encoder_outputs, mel_targets=None, max_steps=1000, stop_threshold=0.5):
         # encoder outs - [B, T, 512]
 
         batch_size = encoder_outputs.size(0)
@@ -291,7 +291,7 @@ class Tacotron2Decoder(nn.Module):
             else:
                 prev_mel = mel_frame # apply new mel
 
-                if (torch.sigmoid(stop_token) > 0.5).all():
+                if (torch.sigmoid(stop_token) > stop_threshold).all():
                     break
 
         # Stack all frames
@@ -310,10 +310,12 @@ class Tacotron2(nn.Module):
         self.decoder = Tacotron2Decoder(mel_size, prenet_hidden, encoder_out, decoder_lstm_hidden, num_layers)
         self.vocoder = WaveNet()
 
-    def forward(self, x, mel_targets=None):
+    def forward(self, x, mel_targets=None, max_steps=1000, stop_threshold=0.5):
         encoder_outputs = self.encoder(x)
-        mel_outputs_post, mel_outputs, stop_outputs, attention_weights = self.decoder(encoder_outputs, mel_targets)
-        vocoder_outputs = self.vocoder(mel_outputs_post)
+        mel_outputs_post, mel_outputs, stop_outputs, attention_weights = self.decoder(
+            encoder_outputs, mel_targets, max_steps=max_steps, stop_threshold=stop_threshold
+        )
+        vocoder_outputs = self.vocoder(mel_outputs_post) if self.training else None
 
         return mel_outputs, mel_outputs_post, stop_outputs, attention_weights, vocoder_outputs
 
