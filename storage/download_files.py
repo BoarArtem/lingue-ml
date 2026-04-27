@@ -22,6 +22,8 @@ files = [
     "word2vec.model",
     "word2vec.model.syn1neg.npy",
     "word2vec.model.wv.vectors.npy",
+    "tokens_cache.pkl",
+    "spam_Emails_data.csv"
 ]
 
 
