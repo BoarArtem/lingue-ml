@@ -53,7 +53,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-model_dir = os.getenv("MODEL_DIR", "models")  # for docker testing/production
+model_dir = os.getenv("MODEL_DIR", "/models")  # for docker testing/production
 ve_model = Word2Vec.load(f"{model_dir}/word2vec.model")# - for my local testing
 # ve_model = Word2Vec.load(f"{model_dir}/word2vec.model")
 
@@ -64,7 +64,7 @@ model = SpamClassificationModel(
     hidden_size=256,
     num_layers=2,
 ).to(device)
-model.load_state_dict(torch.load(f"{model_dir}/spam_classification_model.pth", map_location=device))
+model.load_state_dict(torch.load(f"{model_dir}/spam_classification_model_25.pth", map_location=device))
 model.eval()
 
 # client = Groq(api_key=os.getenv("OPENAI_KEY"))

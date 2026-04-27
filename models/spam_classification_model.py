@@ -49,6 +49,8 @@ def train(epochs):
 
     for epoch in range(epochs):
         total_loss = 0
+        correct = 0
+        total = 0
 
         for X_batch, y_batch in loader:
             X_batch = X_batch.to(device).long()
@@ -63,10 +65,14 @@ def train(epochs):
 
             total_loss += loss.item()
 
-        print(f"Epoch {epoch+1}, Loss: {total_loss:.4f}")
+            preds = torch.argmax(logits, dim=1)
+            correct += (preds == y_batch).sum().item()
+            total += y_batch.size(0)
+
+        print(f"Epoch {epoch+1}/{epochs}, Loss: {total_loss:.4f}, Accuracy: {(correct / total)*100:.4f}")
 
         # save model
-        if (epoch + 1) % 10 == 0:
+        if (epoch + 1) % 20 == 0:
             torch.save(model.state_dict(), f"inference/spam_classification_model_{epoch+1}.pth")
 
     torch.save(model.state_dict(), f"inference/spam_classification_model_{epochs}.pth")
