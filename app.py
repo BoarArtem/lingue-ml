@@ -152,7 +152,7 @@ class CorrectParagraphRequest(BaseModel):
     user_sentence: str = Field(example="I ate pizza yesterday")
 
 class SpamClassificationRequest(BaseModel):
-    user_sentence: str = Field(examples="sex sex drugs drugs gun")
+    user_sentence: str = Field(example="sex sex drugs drugs gun")
 
 
 @app.post(

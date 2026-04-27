@@ -23,7 +23,10 @@ files = [
     "word2vec.model.syn1neg.npy",
     "word2vec.model.wv.vectors.npy",
     "tokens_cache.pkl",
-    "spam_Emails_data.csv"
+    "spam_Emails_data.csv",
+    "spam_classification_model_25.pth",
+    "spam_classification_model_20.pth",
+    "spam_classification_model_10.pth"
 ]
 
 
