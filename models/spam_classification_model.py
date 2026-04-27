@@ -1,8 +1,13 @@
+import os
+
 import torch.optim
+import torch
 
 from data.spam_classification import dataset
 from torch import nn
 from data.spam_classification.dataset import loader
+
+os.makedirs("inference", exist_ok=True)
 
 # model class
 class SpamClassificationModel(nn.Module):
@@ -60,9 +65,12 @@ def train(epochs):
 
         print(f"Epoch {epoch+1}, Loss: {total_loss:.4f}")
 
-    # save model
-    torch.save(model.state_dict(), "../inference/spam_classification_model.pth")
+        # save model
+        if (epoch + 1) % 10 == 0:
+            torch.save(model.state_dict(), f"inference/spam_classification_model_{epoch+1}.pth")
+
+    torch.save(model.state_dict(), f"inference/spam_classification_model_{epochs}.pth")
 
 
 if __name__ == "__main__":
-    print(train(10))
+    print(train(25))
