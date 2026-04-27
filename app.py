@@ -64,7 +64,7 @@ model = SpamClassificationModel(
     hidden_size=256,
     num_layers=2,
 ).to(device)
-model.load_state_dict(torch.load(f"{model_dir}/spam_classification_model_25.pth", map_location=device))
+model.load_state_dict(torch.load(f"{model_dir}/spam_classification_model_60.pth", map_location=device))
 model.eval()
 
 # client = Groq(api_key=os.getenv("OPENAI_KEY"))

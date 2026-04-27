@@ -16,7 +16,7 @@ s3 = boto3.client(
 
 files = [
     "b2_model.pkl",
-    "spam_classification_model.pth",
+    "spam_classification_model_60.pth",
     "topic_model.pkl",
     "topic_vectorizer.pkl",
     "word2vec.model",
