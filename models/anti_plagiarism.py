@@ -56,6 +56,10 @@ def load_anti_plagiarism_model(path, vocab_size, embed_dim, hidden_dim, output_d
 def train_anti_plagiarism_model(num_epochs, model, optimizer, loss_fn, train_loader):
     model.to(DEVICE).train()
 
+    print(f"Training model on {DEVICE}")
+    print(f"Number of epochs: {num_epochs}")
+    print("Starting training...")
+
     for epoch in range(num_epochs):
 
         total_loss = 0
@@ -79,3 +83,12 @@ def train_anti_plagiarism_model(num_epochs, model, optimizer, loss_fn, train_loa
         if epoch % 10 == 0:
             torch.save(model.state_dict(), f"anti_plagiarism_model_epoch_{epoch}.pth")
             print(f"Saved model : [anti_plagiarism_model_epoch_{epoch}.pth] at epoch {epoch}")
+
+    torch.save(model.state_dict(), "anti_plagiarism_model_final.pth")
+    print(f"Saved model : [anti_plagiarism_model_final.pth]")
+
+if __name__ == "__main__":
+    from data.ai_or_human import get_dataloader
+    dataloader = get_dataloader("../data/ai_or_human/ai_human_detection_v1.csv")
+    model = get_anti_plagiarism_model(len(dataloader.vocab), 128, 256, 2)
+    train_anti_plagiarism_model(100, model, torch.optim.Adam(model.parameters(), lr=0.001), nn.CrossEntropyLoss(), dataloader)
