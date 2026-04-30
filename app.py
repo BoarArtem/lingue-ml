@@ -130,6 +130,15 @@ class PreprocessRequest(BaseModel):
 class CorrectParagraphRequest(BaseModel):
     user_sentence: str = Field(example="I ate pizza yesterday")
 
+class SentenceLevelRequest(BaseModel):
+    user_sentence: str = Field(example="I ate apple yesterday")
+
+class SentenceContextLevel(BaseModel):
+    user_sentence: str = Field(example="I ate apple yesterday")
+
+class SentenceContextRate(BaseModel):
+    word: str = Field(example="go home")
+    user_sentence: str = Field(example="I will go home tomorrow")
 
 @app.post(
     "/similar",
@@ -351,3 +360,33 @@ def correct_paragraph_checking(req: CorrectParagraphRequest):
         "AI sentence": original_ai,
         "Changing pair": word_pair(incorrect_words, correct_words)
     }
+
+@app.post(
+    "/sentence_level",
+    tags=["LLM"],
+    summary="Модель определяет уровень предложения",
+    description="Модели подается предложение, условно: 'I ate pizza', и модель определяет его уровень как условно A2",
+    response_description="Уровень предложения: A1, A2, B1, B2, C1, C2"
+)
+def sentence_level(req: SentenceLevelRequest):
+    pass
+
+@app.post(
+    "/sentence_context_level",
+    tags=["LLM"],
+    summary="Модель определяет уровень предложения по слову в контексте",
+    description="Есть два инпута: связка 'go home' и предложение 'i will go home tomorrow'. Модель будет определять насколько сложным являеться предложение, используя связку. -> I will go home -> A1",
+    response_description="Уровень предложения: A1, A2, B1, B2, C1, C2"
+)
+def sentence_context_level(req: SentenceContextLevel):
+    pass
+
+@app.post(
+    "sentence_context_rate",
+    tags=["LLM"],
+    summary="Модель которая способна оценивать использованное слово юзера в контексте",
+    description="Подаёться слово и предложение. Дальше предложение разбивается на токены и просматриваеться на ошибки. Если ошибка имеються - уровень предложения со связкой снизиться. Если нету, то алгоритм ищет слово в предложении, оценивает и решает, подходит оно в предложении или нет. Потом оценивает сложность соединения слова с другой частью.",
+    response_description="Результат связки: 1, 2, 3, 4",
+)
+def sentence_context_rate(req: SentenceContextRate):
+    pass
