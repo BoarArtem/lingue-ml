@@ -10,7 +10,6 @@ import nltk
 from inference.topic_predictor import TopicPredictor
 from models.b2_predictor import B2PredictorModel
 from models.llm_sentence_generate import llm_sentence_generate
-from models.llm_sentence_level import llm_sentence_level
 from models.llm_word_level import llm_word_level
 from models.llm_correct_paragraph import correct_paragraph, get_changed_word, word_pair
 from data.tokenizer import (
@@ -142,7 +141,7 @@ class SentenceContextRate(BaseModel):
     user_sentence: str = Field(example="I will go home tomorrow")
 
 class CheckPlagiarism(BaseModel):
-    user_text: str = Field(examples="bla bla bla bla bla bla bla bla")
+    user_text: str = Field(example="bla bla bla bla bla bla bla bla")
 
 @app.post(
     "/similar",
@@ -373,7 +372,7 @@ def correct_paragraph_checking(req: CorrectParagraphRequest):
     response_description="Уровень предложения: A1, A2, B1, B2, C1, C2"
 )
 def sentence_level(req: SentenceLevelRequest):
-    return llm_sentence_level(req.user_sentence)
+    pass
 
 @app.post(
     "/sentence_context_level",
@@ -386,7 +385,7 @@ def sentence_context_level(req: SentenceContextLevel):
     pass
 
 @app.post(
-    "/sentence_context_rate",
+    "sentence_context_rate",
     tags=["LLM"],
     summary="Модель которая способна оценивать использованное слово юзера в контексте",
     description="Подаёться слово и предложение. Дальше предложение разбивается на токены и просматриваеться на ошибки. Если ошибка имеються - уровень предложения со связкой снизиться. Если нету, то алгоритм ищет слово в предложении, оценивает и решает, подходит оно в предложении или нет. Потом оценивает сложность соединения слова с другой частью.",
