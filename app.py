@@ -39,7 +39,7 @@ ML сервис для Linguo.
 • ML предсказания  
 • preprocessing текста  
 """,
-    version="v2.11.5"
+    version="v2.9.3"
 )
 
 model_dir = os.getenv("MODEL_DIR", "/models")  # for docker testing/production
@@ -141,7 +141,7 @@ class SentenceContextRate(BaseModel):
     user_sentence: str = Field(example="I will go home tomorrow")
 
 class CheckPlagiarism(BaseModel):
-    user_text: str = Field(examples="bla bla bla bla bla bla bla bla")
+    user_text: str = Field(example="bla bla bla bla bla bla bla bla")
 
 @app.post(
     "/similar",
@@ -392,14 +392,4 @@ def sentence_context_level(req: SentenceContextLevel):
     response_description="Результат связки: 1, 2, 3, 4",
 )
 def sentence_context_rate(req: SentenceContextRate):
-    pass
-
-@app.post(
-    "/check_plagiarism",
-    tags=["Machine Learning"],
-    summary="Модель для проверки написанного текста пользователя на плагиат",
-    description="Пользователь пишет текст и его модель будет проверять на наличие ИИ",
-    response_description="AI or Not AI"
-)
-def check_plagiarism(req: CheckPlagiarism):
     pass
