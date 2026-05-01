@@ -1,8 +1,10 @@
 import joblib
 import pandas as pd
 from fastapi import FastAPI, HTTPException
+from fastapi import Request
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from pydantic import BaseModel, Field
@@ -59,7 +61,9 @@ ML сервис для Linguo.
 
 # rate limiter configuration
 limiter = Limiter(key_func=get_remote_address)
+
 app.state.limiter = limiter
+app.add_middleware(SlowAPIMiddleware)
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
@@ -165,15 +169,13 @@ class CheckPlagiarism(BaseModel):
     user_text: str = Field(example="bla bla bla bla bla bla bla bla")
 
 
-@app.get("/health", tags=["System"])
-def health_check():
+@app.get("/health")
+def health(request: Request):
     return {
-        "status": "healthy",
-        "models_loaded": {
-            "word2vec": ve_model is not None,
-            "topic_predictor": topic_predictor is not None,
-            "b2_predictor": predictor is not None
-        }
+        "status": "ok",
+        "word2vec": ve_model is not None,
+        "b2_model": predictor.model is not None,
+        "topic_model": topic_predictor is not None
     }
 
 @app.post(
@@ -188,10 +190,12 @@ def health_check():
     response_description="Список похожих слов"
 )
 @limiter.limit("30/minute")
-def similar(req: SimilarRequest):
-    result = ve_model.wv.most_similar(req.arr, topn=req.topn)
+def similar(request: Request, req: SimilarRequest):
 
-    return result
+    if ve_model is None:
+        raise HTTPException(status_code=500, detail="Word2Vec model not loaded")
+
+    return ve_model.wv.most_similar(req.arr, topn=req.topn)
 
 
 @app.post(
@@ -216,7 +220,7 @@ A1, A2, B1, B2, C1, C2
 """,
     response_description="Уровень CEFR"
 )
-def word_level(req: WordLevelRequest):
+def word_level(request: Request, req: WordLevelRequest):
     result = llm_word_level(
         req.word,
         req.translation
@@ -247,7 +251,7 @@ def word_level(req: WordLevelRequest):
     response_description="Сгенерированное предложение"
 )
 @limiter.limit("10/minute")
-def sentence(req: SentenceRequest):
+def sentence(request: Request, req: SentenceRequest):
     result = llm_sentence_generate(
         req.word,
         req.level,
@@ -275,7 +279,7 @@ def sentence(req: SentenceRequest):
 """,
     response_description="Результат предсказания"
 )
-def predict(req: PredictRequest):
+def predict(request: Request, req: PredictRequest):
     if not predictor.feature_names:
         raise HTTPException(status_code=400, detail="Модель не обучена")
 
@@ -318,7 +322,7 @@ def predict(req: PredictRequest):
 """,
     response_description="Токены предложения"
 )
-def preprocess(req: PreprocessRequest):
+def preprocess(request: Request, req: PreprocessRequest):
     if req.language == "en":
         return sentence_preprocess_english(req.sentence)
 
@@ -346,7 +350,7 @@ def preprocess(req: PreprocessRequest):
     response_description="Предсказанная тема"
 )
 @limiter.limit("10/minute")
-def predict_topic(req: SingleTopicRequest):
+def predict_topic(request: Request, req: SingleTopicRequest):
     if not topic_predictor:
         raise HTTPException(status_code=500, detail="Topic model is not initialized")
 
@@ -366,7 +370,7 @@ def predict_topic(req: SingleTopicRequest):
     response_description="Массив предсказанных тем"
 )
 @limiter.limit("10/minute")
-def predict_topics(req: TopicRequest):
+def predict_topics(request: Request, req: TopicRequest):
     if not topic_predictor:
         raise HTTPException(status_code=500, detail="Topic model is not initialized")
 
@@ -387,7 +391,7 @@ def predict_topics(req: TopicRequest):
     response_description="Объект в котором возвращаеться исправленое предложение, массив правильных слов которое написало ИИ и массив неправильных слов с ошибками или пунктуация"
 )
 @limiter.limit("10/minute")
-def correct_paragraph_checking(req: CorrectParagraphRequest):
+def correct_paragraph_checking(request: Request, req: CorrectParagraphRequest):
     user_sentence = req.user_sentence
     ai_sentence = correct_paragraph(user_sentence)
 
@@ -409,7 +413,7 @@ def correct_paragraph_checking(req: CorrectParagraphRequest):
     description="Модели подается предложение, условно: 'I ate pizza', и модель определяет его уровень как условно A2",
     response_description="Уровень предложения: A1, A2, B1, B2, C1, C2"
 )
-def sentence_level(req: SentenceLevelRequest):
+def sentence_level(request: Request, req: SentenceLevelRequest):
     pass
 
 @app.post(
@@ -419,8 +423,8 @@ def sentence_level(req: SentenceLevelRequest):
     description="Есть два инпута: связка 'go home' и предложение 'i will go home tomorrow'. Модель будет определять насколько сложным являеться предложение, используя связку. -> I will go home -> A1",
     response_description="Уровень предложения: A1, A2, B1, B2, C1, C2"
 )
-def sentence_context_level(req: SentenceContextLevel):
-    pass
+def sentence_context_rate(request: Request, req: SentenceContextRate):
+    return {"status": "ok"}
 
 @app.post(
     "sentence_context_rate",
@@ -429,7 +433,7 @@ def sentence_context_level(req: SentenceContextLevel):
     description="Подаёться слово и предложение. Дальше предложение разбивается на токены и просматриваеться на ошибки. Если ошибка имеються - уровень предложения со связкой снизиться. Если нету, то алгоритм ищет слово в предложении, оценивает и решает, подходит оно в предложении или нет. Потом оценивает сложность соединения слова с другой частью.",
     response_description="Результат связки: 1, 2, 3, 4",
 )
-def sentence_context_rate(req: SentenceContextRate):
+def sentence_context_rate(request: Request, req: SentenceContextRate):
     pass
 
 @app.post(
@@ -439,5 +443,5 @@ def sentence_context_rate(req: SentenceContextRate):
     description="Пользователь пишет текст и его модель будет проверять на наличие ИИ",
     response_description="AI or Not AI"
 )
-def check_plagiarism(req: CheckPlagiarism):
+def check_plagiarism(request: Request, req: CheckPlagiarism):
     pass
