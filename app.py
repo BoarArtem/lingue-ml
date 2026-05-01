@@ -1,6 +1,10 @@
 import joblib
 import pandas as pd
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from pydantic import BaseModel, Field
 from gensim.models import Word2Vec
 # from groq import Groq
@@ -12,6 +16,7 @@ from models.b2_predictor import B2PredictorModel
 from models.llm_sentence_generate import llm_sentence_generate
 from models.llm_word_level import llm_word_level
 from models.llm_correct_paragraph import correct_paragraph, get_changed_word, word_pair
+
 from data.tokenizer import (
     sentence_preprocess_english,
     sentence_preprocess_russian,
@@ -41,6 +46,22 @@ ML сервис для Linguo.
 """,
     version="v2.11.5"
 )
+
+
+# NON READY
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=[""],
+#     allow_credentials=True,
+#     allow_methods=[""],
+#     allow_headers=[""],
+# )
+
+# rate limiter configuration
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 
 model_dir = os.getenv("MODEL_DIR", "/models")  # for docker testing/production
 # ve_model = Word2Vec.load(f"{model_dir}/word2vec.model")# - for my local testing
@@ -143,6 +164,18 @@ class SentenceContextRate(BaseModel):
 class CheckPlagiarism(BaseModel):
     user_text: str = Field(example="bla bla bla bla bla bla bla bla")
 
+
+@app.get("/health", tags=["System"])
+def health_check():
+    return {
+        "status": "healthy",
+        "models_loaded": {
+            "word2vec": ve_model is not None,
+            "topic_predictor": topic_predictor is not None,
+            "b2_predictor": predictor is not None
+        }
+    }
+
 @app.post(
     "/similar",
     tags=["Embeddings"],
@@ -154,6 +187,7 @@ class CheckPlagiarism(BaseModel):
 """,
     response_description="Список похожих слов"
 )
+@limiter.limit("30/minute")
 def similar(req: SimilarRequest):
     result = ve_model.wv.most_similar(req.arr, topn=req.topn)
 
@@ -212,6 +246,7 @@ def word_level(req: WordLevelRequest):
 """,
     response_description="Сгенерированное предложение"
 )
+@limiter.limit("10/minute")
 def sentence(req: SentenceRequest):
     result = llm_sentence_generate(
         req.word,
@@ -310,6 +345,7 @@ def preprocess(req: PreprocessRequest):
     description="Принимает одну строку и возвращает предсказанную тему.",
     response_description="Предсказанная тема"
 )
+@limiter.limit("10/minute")
 def predict_topic(req: SingleTopicRequest):
     if not topic_predictor:
         raise HTTPException(status_code=500, detail="Topic model is not initialized")
@@ -329,6 +365,7 @@ def predict_topic(req: SingleTopicRequest):
     description="Принимает массив строк и возвращает предсказанные темы для каждой из них.",
     response_description="Массив предсказанных тем"
 )
+@limiter.limit("10/minute")
 def predict_topics(req: TopicRequest):
     if not topic_predictor:
         raise HTTPException(status_code=500, detail="Topic model is not initialized")
@@ -349,6 +386,7 @@ def predict_topics(req: TopicRequest):
     """,
     response_description="Объект в котором возвращаеться исправленое предложение, массив правильных слов которое написало ИИ и массив неправильных слов с ошибками или пунктуация"
 )
+@limiter.limit("10/minute")
 def correct_paragraph_checking(req: CorrectParagraphRequest):
     user_sentence = req.user_sentence
     ai_sentence = correct_paragraph(user_sentence)
