@@ -50,15 +50,17 @@ ML сервис для Linguo.
 )
 
 
-# NON READY
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=[""],
-#     allow_credentials=True,
-#     allow_methods=[""],
-#     allow_headers=[""],
-# )
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://34.30.102.15",
+        "http://34.10.240.6",
+        "https://api.ml.linguo.foo",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 # rate limiter configuration
 limiter = Limiter(key_func=get_remote_address)
 
