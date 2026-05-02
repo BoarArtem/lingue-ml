@@ -44,7 +44,7 @@ class AntiPlagiarismModel(nn.Module):
         return out, attn_weights
 
 def get_anti_plagiarism_model(vocab_size, embed_dim, hidden_dim, output_dim):
-    return AntiPlagiarismModel(vocab_size, embed_dim, hidden_dim, output_dim)
+    return AntiPlagiarismModel(vocab_size, embed_dim, hidden_dim, output_dim).to(DEVICE)
 
 def load_anti_plagiarism_model(path, vocab_size, embed_dim, hidden_dim, output_dim):
     model = get_anti_plagiarism_model(vocab_size, embed_dim, hidden_dim, output_dim)
