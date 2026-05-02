@@ -4,7 +4,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from dotenv import load_dotenv
 
 load_dotenv()
-client = ChatOllama(model=os.getenv("OLLAMA_MODEL_NAME"), temperature=0, base_url="http://localhost:11434")
+client = ChatOllama(model=os.getenv("OLLAMA_MODEL_NAME"), temperature=0, base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"))
 
 system_prompt = """You are a language proficiency level classifier. Your task is to analyze sentences and determine their CEFR level (A1, A2, B1, B2, C1, C2) based on grammatical complexity and typical errors.
 
