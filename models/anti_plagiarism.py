@@ -90,7 +90,7 @@ def train_anti_plagiarism_model(num_epochs, model, optimizer, loss_fn, train_loa
 if __name__ == "__main__":
     from data.ai_or_human import get_dataloader
     from data.ai_or_human.dataset_executor import AIOrHumanDataset
-    dataset = AIOrHumanDataset("linguo-ml/data/ai_or_human/ai_human_detection_v1.csv")
-    dataloader = get_dataloader("linguo-ml/data/ai_or_human/ai_human_detection_v1.csv")
+    dataset = AIOrHumanDataset("/linguo-ml/data/ai_or_human/ai_human_detection_v1.csv")
+    dataloader = get_dataloader("/linguo-ml/data/ai_or_human/ai_human_detection_v1.csv")
     model = get_anti_plagiarism_model(dataset.vocab, 128, 256, 3)
     train_anti_plagiarism_model(100, model, torch.optim.Adam(model.parameters(), lr=0.001), nn.CrossEntropyLoss(), dataloader)
