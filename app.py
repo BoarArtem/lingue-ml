@@ -1,6 +1,12 @@
 import joblib
 import pandas as pd
 from fastapi import FastAPI, HTTPException
+from fastapi import Request
+from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.middleware import SlowAPIMiddleware
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from pydantic import BaseModel, Field
 from gensim.models import Word2Vec
 # from groq import Groq
@@ -12,6 +18,7 @@ from models.b2_predictor import B2PredictorModel
 from models.llm_sentence_generate import llm_sentence_generate
 from models.llm_word_level import llm_word_level
 from models.llm_correct_paragraph import correct_paragraph, get_changed_word, word_pair
+
 from data.tokenizer import (
     sentence_preprocess_english,
     sentence_preprocess_russian,
@@ -39,8 +46,28 @@ ML сервис для Linguo.
 • ML предсказания  
 • preprocessing текста  
 """,
-    version="v2.9.3"
+    version="v2.11.5"
 )
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://34.30.102.15",
+        "http://34.10.240.6",
+        "https://api.ml.linguo.foo",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+# rate limiter configuration
+limiter = Limiter(key_func=get_remote_address)
+
+app.state.limiter = limiter
+app.add_middleware(SlowAPIMiddleware)
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 
 model_dir = os.getenv("MODEL_DIR", "/models")  # for docker testing/production
 # ve_model = Word2Vec.load(f"{model_dir}/word2vec.model")# - for my local testing
@@ -143,6 +170,16 @@ class SentenceContextRate(BaseModel):
 class CheckPlagiarism(BaseModel):
     user_text: str = Field(example="bla bla bla bla bla bla bla bla")
 
+
+@app.get("/health")
+def health(request: Request):
+    return {
+        "status": "ok",
+        "word2vec": ve_model is not None,
+        "b2_model": predictor.model is not None,
+        "topic_model": topic_predictor is not None
+    }
+
 @app.post(
     "/similar",
     tags=["Embeddings"],
@@ -154,10 +191,13 @@ class CheckPlagiarism(BaseModel):
 """,
     response_description="Список похожих слов"
 )
-def similar(req: SimilarRequest):
-    result = ve_model.wv.most_similar(req.arr, topn=req.topn)
+@limiter.limit("30/minute")
+def similar(request: Request, req: SimilarRequest):
 
-    return result
+    if ve_model is None:
+        raise HTTPException(status_code=500, detail="Word2Vec model not loaded")
+
+    return ve_model.wv.most_similar(req.arr, topn=req.topn)
 
 
 @app.post(
@@ -182,7 +222,7 @@ A1, A2, B1, B2, C1, C2
 """,
     response_description="Уровень CEFR"
 )
-def word_level(req: WordLevelRequest):
+def word_level(request: Request, req: WordLevelRequest):
     result = llm_word_level(
         req.word,
         req.translation
@@ -212,7 +252,8 @@ def word_level(req: WordLevelRequest):
 """,
     response_description="Сгенерированное предложение"
 )
-def sentence(req: SentenceRequest):
+@limiter.limit("10/minute")
+def sentence(request: Request, req: SentenceRequest):
     result = llm_sentence_generate(
         req.word,
         req.level,
@@ -240,7 +281,7 @@ def sentence(req: SentenceRequest):
 """,
     response_description="Результат предсказания"
 )
-def predict(req: PredictRequest):
+def predict(request: Request, req: PredictRequest):
     if not predictor.feature_names:
         raise HTTPException(status_code=400, detail="Модель не обучена")
 
@@ -283,7 +324,7 @@ def predict(req: PredictRequest):
 """,
     response_description="Токены предложения"
 )
-def preprocess(req: PreprocessRequest):
+def preprocess(request: Request, req: PreprocessRequest):
     if req.language == "en":
         return sentence_preprocess_english(req.sentence)
 
@@ -310,7 +351,8 @@ def preprocess(req: PreprocessRequest):
     description="Принимает одну строку и возвращает предсказанную тему.",
     response_description="Предсказанная тема"
 )
-def predict_topic(req: SingleTopicRequest):
+@limiter.limit("10/minute")
+def predict_topic(request: Request, req: SingleTopicRequest):
     if not topic_predictor:
         raise HTTPException(status_code=500, detail="Topic model is not initialized")
 
@@ -329,7 +371,8 @@ def predict_topic(req: SingleTopicRequest):
     description="Принимает массив строк и возвращает предсказанные темы для каждой из них.",
     response_description="Массив предсказанных тем"
 )
-def predict_topics(req: TopicRequest):
+@limiter.limit("10/minute")
+def predict_topics(request: Request, req: TopicRequest):
     if not topic_predictor:
         raise HTTPException(status_code=500, detail="Topic model is not initialized")
 
@@ -349,7 +392,8 @@ def predict_topics(req: TopicRequest):
     """,
     response_description="Объект в котором возвращаеться исправленое предложение, массив правильных слов которое написало ИИ и массив неправильных слов с ошибками или пунктуация"
 )
-def correct_paragraph_checking(req: CorrectParagraphRequest):
+@limiter.limit("10/minute")
+def correct_paragraph_checking(request: Request, req: CorrectParagraphRequest):
     user_sentence = req.user_sentence
     ai_sentence = correct_paragraph(user_sentence)
 
@@ -371,7 +415,7 @@ def correct_paragraph_checking(req: CorrectParagraphRequest):
     description="Модели подается предложение, условно: 'I ate pizza', и модель определяет его уровень как условно A2",
     response_description="Уровень предложения: A1, A2, B1, B2, C1, C2"
 )
-def sentence_level(req: SentenceLevelRequest):
+def sentence_level(request: Request, req: SentenceLevelRequest):
     pass
 
 @app.post(
@@ -381,8 +425,8 @@ def sentence_level(req: SentenceLevelRequest):
     description="Есть два инпута: связка 'go home' и предложение 'i will go home tomorrow'. Модель будет определять насколько сложным являеться предложение, используя связку. -> I will go home -> A1",
     response_description="Уровень предложения: A1, A2, B1, B2, C1, C2"
 )
-def sentence_context_level(req: SentenceContextLevel):
-    pass
+def sentence_context_rate(request: Request, req: SentenceContextRate):
+    return {"status": "ok"}
 
 @app.post(
     "sentence_context_rate",
@@ -391,5 +435,15 @@ def sentence_context_level(req: SentenceContextLevel):
     description="Подаёться слово и предложение. Дальше предложение разбивается на токены и просматриваеться на ошибки. Если ошибка имеються - уровень предложения со связкой снизиться. Если нету, то алгоритм ищет слово в предложении, оценивает и решает, подходит оно в предложении или нет. Потом оценивает сложность соединения слова с другой частью.",
     response_description="Результат связки: 1, 2, 3, 4",
 )
-def sentence_context_rate(req: SentenceContextRate):
+def sentence_context_rate(request: Request, req: SentenceContextRate):
+    pass
+
+@app.post(
+    "/check_plagiarism",
+    tags=["Machine Learning"],
+    summary="Модель для проверки написанного текста пользователя на плагиат",
+    description="Пользователь пишет текст и его модель будет проверять на наличие ИИ",
+    response_description="AI or Not AI"
+)
+def check_plagiarism(request: Request, req: CheckPlagiarism):
     pass
