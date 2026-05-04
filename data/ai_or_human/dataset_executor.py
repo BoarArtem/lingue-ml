@@ -8,10 +8,10 @@ import torch
 lemmatizer = WordNetLemmatizer()
 tokenizer = AutoTokenizer.from_pretrained("gpt2")
 
-def get_csv_x_y(filepath):
+def get_csv_x_y(filepath, x_label="text", y_label="human_or_ai"):
     df = pd.read_csv(filepath, index_col=0)
-    X = df["text"]
-    y = df["human_or_ai"]
+    X = df[x_label]
+    y = df[y_label]
 
     return X, y
 
@@ -35,8 +35,8 @@ def encode_user_text(user_text):
     return torch.tensor(encoded)
 
 class AIOrHumanDataset(Dataset):
-    def __init__(self, filepath):
-        self.X, self.y = get_csv_x_y(filepath)
+    def __init__(self, filepath, x_label="text", y_label="human_or_ai"):
+        self.X, self.y = get_csv_x_y(filepath, x_label=x_label, y_label=y_label)
         self.vocab = tokenizer.vocab_size
 
     def __getitem__(self, idx):
