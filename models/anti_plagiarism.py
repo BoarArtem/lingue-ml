@@ -43,6 +43,26 @@ class AntiPlagiarismModel(nn.Module):
 
         return out, attn_weights
 
+class EarlyStopping:
+    def __init__(self, patience, min_delta=0.001):
+        self.patience = patience
+        self.min_delta = min_delta
+        self.counter = 0
+        self.best_loss = float('inf')
+        self.early_stop = False
+
+    def __call__(self, val_loss):
+        if val_loss < self.best_loss - self.min_delta:
+            self.best_loss = val_loss
+            self.counter = 0
+            # Save the best model
+            torch.save(model.state_dict(), 'anti_plagiarism_best.pth')
+        else:
+            self.counter += 1
+            print(f"Early stopping counter: {self.counter}/{self.patience}")
+            if self.counter >= self.patience:
+                self.early_stop = True
+
 def get_anti_plagiarism_model(vocab_size, embed_dim, hidden_dim, output_dim):
     return AntiPlagiarismModel(vocab_size, embed_dim, hidden_dim, output_dim).to(DEVICE)
 
@@ -53,7 +73,7 @@ def load_anti_plagiarism_model(path, vocab_size, embed_dim, hidden_dim, output_d
 
     return model
 
-def train_anti_plagiarism_model(num_epochs, model, optimizer, loss_fn, train_loader):
+def train_anti_plagiarism_model(num_epochs, model, optimizer, loss_fn, train_loader, callbacks: list):
     model.to(DEVICE).train()
 
     print(f"Training model on {DEVICE}")
@@ -79,6 +99,13 @@ def train_anti_plagiarism_model(num_epochs, model, optimizer, loss_fn, train_loa
             total_loss += loss.item()
 
         print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {total_loss / len(train_loader):.4f}")
+
+        for callback in callbacks:
+            callback(total_loss / len(train_loader))
+
+            if callback.early_stop:
+                print("Early stopping...")
+                return
 
         if epoch % 10 == 0:
             torch.save(model.state_dict(), f"anti_plagiarism_model_epoch_{epoch}.pth")
