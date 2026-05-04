@@ -1,0 +1,180 @@
+2026-05-05 00:20:56,216 - app - INFO - ==================================================
+2026-05-05 00:20:56,229 - app - INFO - Version: v2.11.5
+2026-05-05 00:20:56,230 - app - INFO - Model directory: /models
+2026-05-05 00:20:56,230 - app - INFO - Word2Vec model loaded: True
+2026-05-05 00:20:56,230 - app - INFO - B2 predictor loaded: True
+2026-05-05 00:20:56,230 - app - INFO - Topic predictor loaded: True
+2026-05-05 00:20:56,231 - app - INFO - ==================================================
+2026-05-05 00:22:02,227 - app - INFO - ==================================================
+2026-05-05 00:22:02,236 - app - INFO - Version: v2.11.5
+2026-05-05 00:22:02,236 - app - INFO - Model directory: /models
+2026-05-05 00:22:02,236 - app - INFO - Word2Vec model loaded: True
+2026-05-05 00:22:02,237 - app - INFO - B2 predictor loaded: True
+2026-05-05 00:22:02,237 - app - INFO - Topic predictor loaded: True
+2026-05-05 00:22:02,238 - app - INFO - ==================================================
+2026-05-05 00:25:41,061 - app - INFO - ==================================================
+2026-05-05 00:25:41,061 - app - INFO - ML Linguo Service starting up
+2026-05-05 00:25:41,062 - app - INFO - Version: v2.11.5
+2026-05-05 00:25:41,062 - app - INFO - Model directory: /models
+2026-05-05 00:25:41,062 - app - INFO - Word2Vec model loaded: True
+2026-05-05 00:25:41,063 - app - INFO - B2 predictor loaded: True
+2026-05-05 00:25:41,063 - app - INFO - Topic predictor loaded: True
+2026-05-05 00:25:41,063 - app - INFO - ==================================================
+2026-05-05 00:26:01,486 - app - INFO - INFO - Request: POST /sentence | Client: 127.0.0.1
+2026-05-05 00:26:01,490 - app - INFO - REQUEST: Sentence generation: word='Крупа', level=A1, language=russian
+2026-05-05 00:26:05,602 - app - ERROR - ERROR: Sentence generation error: [WinError 10061] Подключение не установлено, т.к. конечный компьютер отверг запрос на подключение
+Traceback (most recent call last):
+  File "E:\projects\linguo-ml\.venv\Lib\site-packages\httpx\_transports\default.py", line 101, in map_httpcore_exceptions
+    yield
+  File "E:\projects\linguo-ml\.venv\Lib\site-packages\httpx\_transports\default.py", line 250, in handle_request
+    resp = self._pool.handle_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\projects\linguo-ml\.venv\Lib\site-packages\httpcore\_sync\connection_pool.py", line 256, in handle_request
+    raise exc from None
+  File "E:\projects\linguo-ml\.venv\Lib\site-packages\httpcore\_sync\connection_pool.py", line 236, in handle_request
+    response = connection.handle_request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\projects\linguo-ml\.venv\Lib\site-packages\httpcore\_sync\connection.py", line 101, in handle_request
+    raise exc
+  File "E:\projects\linguo-ml\.venv\Lib\site-packages\httpcore\_sync\connection.py", line 78, in handle_request
+    stream = self._connect(request)
+             ^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\projects\linguo-ml\.venv\Lib\site-packages\httpcore\_sync\connection.py", line 124, in _connect
+    stream = self._network_backend.connect_tcp(**kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\projects\linguo-ml\.venv\Lib\site-packages\httpcore\_backends\sync.py", line 207, in connect_tcp
+    with map_exceptions(exc_map):
+  File "C:\Users\Admin\AppData\Local\Programs\Python\Python311\Lib\contextlib.py", line 155, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "E:\projects\linguo-ml\.venv\Lib\site-packages\httpcore\_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ConnectError: [WinError 10061] Подключение не установлено, т.к. конечный компьютер отверг запрос на подключение
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "E:\projects\linguo-ml\app.py", line 328, in sentence
+    result = llm_sentence_generate(req.word, req.level, req.language)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\projects\linguo-ml\models\llm_sentence_generate.py", line 10, in llm_sentence_generate
+    response = client.invoke([
+               ^^^^^^^^^^^^^^^
+  File "E:\projects\linguo-ml\.venv\Lib\site-packages\langchain_core\language_models\chat_models.py", line 454, in invoke
+    self.generate_prompt(
+  File "E:\projects\linguo-ml\.venv\Lib\site-packages\langchain_core\language_models\chat_models.py", line 1185, in generate_prompt
+    return self.generate(prompt_messages, stop=stop, callbacks=callbacks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\projects\linguo-ml\.venv\Lib\site-packages\langchain_core\language_models\chat_models.py", line 995, in generate
+    self._generate_with_cache(
+  File "E:\projects\linguo-ml\.venv\Lib\site-packages\langchain_core\language_models\chat_models.py", line 1297, in _generate_with_cache
+    result = self._generate(
+             ^^^^^^^^^^^^^^^
+  File "E:\projects\linguo-ml\.venv\Lib\site-packages\langchain_ollama\chat_models.py", line 1030, in _generate
+    final_chunk = self._chat_stream_with_aggregation(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\projects\linguo-ml\.venv\Lib\site-packages\langchain_ollama\chat_models.py", line 965, in _chat_stream_with_aggregation
+    for chunk in self._iterate_over_stream(messages, stop, **kwargs):
+  File "E:\projects\linguo-ml\.venv\Lib\site-packages\langchain_ollama\chat_models.py", line 1054, in _iterate_over_stream
+    for stream_resp in self._create_chat_stream(messages, stop, **kwargs):
+  File "E:\projects\linguo-ml\.venv\Lib\site-packages\langchain_ollama\chat_models.py", line 952, in _create_chat_stream
+    yield from self._client.chat(**chat_params)
+  File "E:\projects\linguo-ml\.venv\Lib\site-packages\ollama\_client.py", line 174, in inner
+    with self._client.stream(*args, **kwargs) as r:
+  File "C:\Users\Admin\AppData\Local\Programs\Python\Python311\Lib\contextlib.py", line 137, in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+  File "E:\projects\linguo-ml\.venv\Lib\site-packages\httpx\_client.py", line 868, in stream
+    response = self.send(
+               ^^^^^^^^^^
+  File "E:\projects\linguo-ml\.venv\Lib\site-packages\httpx\_client.py", line 914, in send
+    response = self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\projects\linguo-ml\.venv\Lib\site-packages\httpx\_client.py", line 942, in _send_handling_auth
+    response = self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\projects\linguo-ml\.venv\Lib\site-packages\httpx\_client.py", line 979, in _send_handling_redirects
+    response = self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\projects\linguo-ml\.venv\Lib\site-packages\httpx\_client.py", line 1014, in _send_single_request
+    response = transport.handle_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\projects\linguo-ml\.venv\Lib\site-packages\httpx\_transports\default.py", line 249, in handle_request
+    with map_httpcore_exceptions():
+  File "C:\Users\Admin\AppData\Local\Programs\Python\Python311\Lib\contextlib.py", line 155, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "E:\projects\linguo-ml\.venv\Lib\site-packages\httpx\_transports\default.py", line 118, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ConnectError: [WinError 10061] Подключение не установлено, т.к. конечный компьютер отверг запрос на подключение
+2026-05-05 00:26:05,618 - app - INFO - INGO - Response: POST /sentence | Status: 500 | Duration: 4.132s
+2026-05-05 00:26:39,895 - app - INFO - INFO - Request: POST /sentence | Client: 127.0.0.1
+2026-05-05 00:26:39,899 - app - INFO - REQUEST: Sentence generation: word='Крупа', level=A1, language=russian
+2026-05-05 00:26:48,989 - httpx - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-05-05 00:26:49,191 - app - INFO - SUCCESS: Sentence generated (took 9.29s): Крупа используется для приготовления различных блю...
+2026-05-05 00:26:49,192 - app - INFO - INGO - Response: POST /sentence | Status: 200 | Duration: 9.297s
+{"ts": "2026-05-04T21:33:53.627453+00:00", "level": "INFO", "logger": "ml_linguo", "message": "Loading Word2Vec model...", "src_module": "app", "src_func": "<module>", "src_line": 171}
+{"ts": "2026-05-04T21:33:55.331179+00:00", "level": "INFO", "logger": "ml_linguo", "message": "TopicPredictor loaded successfully", "src_module": "app", "src_func": "<module>", "src_line": 176}
+{"ts": "2026-05-04T21:33:55.424145+00:00", "level": "INFO", "logger": "ml_linguo", "message": "B2PredictorModel loaded from disk", "src_module": "app", "src_func": "<module>", "src_line": 183}
+{"ts": "2026-05-04T21:33:55.438313+00:00", "level": "INFO", "logger": "ml_linguo", "message": "Service started", "src_module": "app", "src_func": "startup_event", "src_line": 246}
+{"ts": "2026-05-04T21:34:00.316257+00:00", "level": "INFO", "logger": "ml_linguo", "message": "в†’ POST /sentence", "src_module": "app", "src_func": "request_logging_middleware", "src_line": 275, "request_id": "8dd45e65", "method": "POST", "path": "/sentence", "client_ip": "127.0.0.1"}
+{"ts": "2026-05-04T21:34:00.324260+00:00", "level": "INFO", "logger": "ml_linguo", "message": "Sentence generation: word='РљСЂСѓРїР°', level=A1, lang=russian", "src_module": "app", "src_func": "sentence", "src_line": 400, "request_id": "8dd45e65", "word": "РљСЂСѓРїР°", "language": "russian"}
+{"ts": "2026-05-04T21:34:09.276220+00:00", "level": "INFO", "logger": "ml_linguo", "message": "Sentence generated: 'РљСЂСѓРїР° РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РґР»СЏ РїСЂРёРіРѕС‚РѕРІР»РµРЅРёСЏ СЂР°Р·Р»РёС‡РЅС‹С… Р±Р»СЋРґ.', took=8951.7ms", "src_module": "app", "src_func": "sentence", "src_line": 409, "request_id": "8dd45e65", "duration_ms": 8951.7}
+{"ts": "2026-05-04T21:34:09.277222+00:00", "level": "INFO", "logger": "ml_linguo", "message": "в†ђ POST /sentence 200 (8960.2ms)", "src_module": "app", "src_func": "request_logging_middleware", "src_line": 307, "request_id": "8dd45e65", "method": "POST", "path": "/sentence", "status": 200, "duration_ms": 8960.2, "client_ip": "127.0.0.1"}
+{"ts": "2026-05-04T21:34:30.755117+00:00", "level": "INFO", "logger": "ml_linguo", "message": "в†’ POST /correct_paragraph", "src_module": "app", "src_func": "request_logging_middleware", "src_line": 275, "request_id": "469ddad7", "method": "POST", "path": "/correct_paragraph", "client_ip": "127.0.0.1"}
+{"ts": "2026-05-04T21:34:30.763645+00:00", "level": "INFO", "logger": "ml_linguo", "message": "Correct paragraph: chars=30", "src_module": "app", "src_func": "correct_paragraph_checking", "src_line": 565, "request_id": "469ddad7"}
+{"ts": "2026-05-04T21:34:33.203642+00:00", "level": "INFO", "logger": "ml_linguo", "message": "Paragraph corrected: changes=6, took=2440.2ms", "src_module": "app", "src_func": "correct_paragraph_checking", "src_line": 576, "request_id": "469ddad7", "duration_ms": 2440.2}
+{"ts": "2026-05-04T21:34:33.204642+00:00", "level": "INFO", "logger": "ml_linguo", "message": "в†ђ POST /correct_paragraph 200 (2449.4ms)", "src_module": "app", "src_func": "request_logging_middleware", "src_line": 307, "request_id": "469ddad7", "method": "POST", "path": "/correct_paragraph", "status": 200, "duration_ms": 2449.4, "client_ip": "127.0.0.1"}
+{"ts": "2026-05-04T21:34:49.255955+00:00", "level": "INFO", "logger": "ml_linguo", "message": "в†’ POST /get", "src_module": "app", "src_func": "request_logging_middleware", "src_line": 275, "request_id": "3f00e4e8", "method": "POST", "path": "/get", "client_ip": "127.0.0.1"}
+{"ts": "2026-05-04T21:34:49.257957+00:00", "level": "WARNING", "logger": "ml_linguo", "message": "в†ђ POST /get 404 (0.7ms)", "src_module": "app", "src_func": "request_logging_middleware", "src_line": 307, "request_id": "3f00e4e8", "method": "POST", "path": "/get", "status": 404, "duration_ms": 0.7, "client_ip": "127.0.0.1"}
+{"ts": "2026-05-04T21:35:04.962655+00:00", "level": "INFO", "logger": "ml_linguo", "message": "в†’ GET /health", "src_module": "app", "src_func": "request_logging_middleware", "src_line": 275, "request_id": "fa7ad335", "method": "GET", "path": "/health", "client_ip": "127.0.0.1"}
+{"ts": "2026-05-04T21:35:04.965650+00:00", "level": "DEBUG", "logger": "ml_linguo", "message": "Health check", "src_module": "app", "src_func": "health", "src_line": 337, "request_id": "fa7ad335"}
+{"ts": "2026-05-04T21:35:04.967651+00:00", "level": "INFO", "logger": "ml_linguo", "message": "в†ђ GET /health 200 (3.5ms)", "src_module": "app", "src_func": "request_logging_middleware", "src_line": 307, "request_id": "fa7ad335", "method": "GET", "path": "/health", "status": 200, "duration_ms": 3.5, "client_ip": "127.0.0.1"}
+{"ts": "2026-05-04T21:35:25.575831+00:00", "level": "INFO", "logger": "ml_linguo", "message": "в†’ GET /docs", "src_module": "app", "src_func": "request_logging_middleware", "src_line": 275, "request_id": "63dfb2f0", "method": "GET", "path": "/docs", "client_ip": "127.0.0.1"}
+{"ts": "2026-05-04T21:35:25.578841+00:00", "level": "INFO", "logger": "ml_linguo", "message": "в†ђ GET /docs 200 (1.8ms)", "src_module": "app", "src_func": "request_logging_middleware", "src_line": 307, "request_id": "63dfb2f0", "method": "GET", "path": "/docs", "status": 200, "duration_ms": 1.8, "client_ip": "127.0.0.1"}
+{"ts": "2026-05-04T21:35:25.982527+00:00", "level": "INFO", "logger": "ml_linguo", "message": "в†’ GET /openapi.json", "src_module": "app", "src_func": "request_logging_middleware", "src_line": 275, "request_id": "910485bc", "method": "GET", "path": "/openapi.json", "client_ip": "127.0.0.1"}
+{"ts": "2026-05-04T21:35:26.059871+00:00", "level": "INFO", "logger": "ml_linguo", "message": "в†ђ GET /openapi.json 200 (74.6ms)", "src_module": "app", "src_func": "request_logging_middleware", "src_line": 307, "request_id": "910485bc", "method": "GET", "path": "/openapi.json", "status": 200, "duration_ms": 74.6, "client_ip": "127.0.0.1"}
+{"ts": "2026-05-04T21:36:31.449006+00:00", "level": "INFO", "logger": "ml_linguo", "message": "в†’ POST /correct_paragraph", "src_module": "app", "src_func": "request_logging_middleware", "src_line": 275, "request_id": "449eeff5", "method": "POST", "path": "/correct_paragraph", "client_ip": "127.0.0.1"}
+{"ts": "2026-05-04T21:36:31.452017+00:00", "level": "INFO", "logger": "ml_linguo", "message": "Correct paragraph: chars=30", "src_module": "app", "src_func": "correct_paragraph_checking", "src_line": 565, "request_id": "449eeff5"}
+{"ts": "2026-05-04T21:36:33.988286+00:00", "level": "INFO", "logger": "ml_linguo", "message": "Paragraph corrected: changes=6, took=2535.9ms", "src_module": "app", "src_func": "correct_paragraph_checking", "src_line": 576, "request_id": "449eeff5", "duration_ms": 2535.9}
+{"ts": "2026-05-04T21:36:33.990296+00:00", "level": "INFO", "logger": "ml_linguo", "message": "в†ђ POST /correct_paragraph 200 (2540.6ms)", "src_module": "app", "src_func": "request_logging_middleware", "src_line": 307, "request_id": "449eeff5", "method": "POST", "path": "/correct_paragraph", "status": 200, "duration_ms": 2540.6, "client_ip": "127.0.0.1"}
+{"ts": "2026-05-04T21:36:34.897748+00:00", "level": "INFO", "logger": "ml_linguo", "message": "в†’ POST /correct_paragraph", "src_module": "app", "src_func": "request_logging_middleware", "src_line": 275, "request_id": "66fd92dc", "method": "POST", "path": "/correct_paragraph", "client_ip": "127.0.0.1"}
+{"ts": "2026-05-04T21:36:34.900715+00:00", "level": "INFO", "logger": "ml_linguo", "message": "Correct paragraph: chars=30", "src_module": "app", "src_func": "correct_paragraph_checking", "src_line": 565, "request_id": "66fd92dc"}
+{"ts": "2026-05-04T21:36:35.229373+00:00", "level": "INFO", "logger": "ml_linguo", "message": "Paragraph corrected: changes=6, took=327.2ms", "src_module": "app", "src_func": "correct_paragraph_checking", "src_line": 576, "request_id": "66fd92dc", "duration_ms": 327.2}
+{"ts": "2026-05-04T21:36:35.229373+00:00", "level": "INFO", "logger": "ml_linguo", "message": "в†ђ POST /correct_paragraph 200 (331.8ms)", "src_module": "app", "src_func": "request_logging_middleware", "src_line": 307, "request_id": "66fd92dc", "method": "POST", "path": "/correct_paragraph", "status": 200, "duration_ms": 331.8, "client_ip": "127.0.0.1"}
+{"ts": "2026-05-04T21:36:36.393227+00:00", "level": "INFO", "logger": "ml_linguo", "message": "в†’ POST /correct_paragraph", "src_module": "app", "src_func": "request_logging_middleware", "src_line": 275, "request_id": "579eaf3b", "method": "POST", "path": "/correct_paragraph", "client_ip": "127.0.0.1"}
+{"ts": "2026-05-04T21:36:36.398215+00:00", "level": "INFO", "logger": "ml_linguo", "message": "Correct paragraph: chars=30", "src_module": "app", "src_func": "correct_paragraph_checking", "src_line": 565, "request_id": "579eaf3b"}
+{"ts": "2026-05-04T21:36:36.766292+00:00", "level": "INFO", "logger": "ml_linguo", "message": "Paragraph corrected: changes=6, took=367.6ms", "src_module": "app", "src_func": "correct_paragraph_checking", "src_line": 576, "request_id": "579eaf3b", "duration_ms": 367.6}
+{"ts": "2026-05-04T21:36:36.768303+00:00", "level": "INFO", "logger": "ml_linguo", "message": "в†ђ POST /correct_paragraph 200 (374.6ms)", "src_module": "app", "src_func": "request_logging_middleware", "src_line": 307, "request_id": "579eaf3b", "method": "POST", "path": "/correct_paragraph", "status": 200, "duration_ms": 374.6, "client_ip": "127.0.0.1"}
+{"ts": "2026-05-04T21:36:37.659936+00:00", "level": "INFO", "logger": "ml_linguo", "message": "в†’ POST /correct_paragraph", "src_module": "app", "src_func": "request_logging_middleware", "src_line": 275, "request_id": "7576ac04", "method": "POST", "path": "/correct_paragraph", "client_ip": "127.0.0.1"}
+{"ts": "2026-05-04T21:36:37.664937+00:00", "level": "INFO", "logger": "ml_linguo", "message": "Correct paragraph: chars=30", "src_module": "app", "src_func": "correct_paragraph_checking", "src_line": 565, "request_id": "7576ac04"}
+{"ts": "2026-05-04T21:36:38.009635+00:00", "level": "INFO", "logger": "ml_linguo", "message": "Paragraph corrected: changes=6, took=342.9ms", "src_module": "app", "src_func": "correct_paragraph_checking", "src_line": 576, "request_id": "7576ac04", "duration_ms": 342.9}
+{"ts": "2026-05-04T21:36:38.010633+00:00", "level": "INFO", "logger": "ml_linguo", "message": "в†ђ POST /correct_paragraph 200 (350.1ms)", "src_module": "app", "src_func": "request_logging_middleware", "src_line": 307, "request_id": "7576ac04", "method": "POST", "path": "/correct_paragraph", "status": 200, "duration_ms": 350.1, "client_ip": "127.0.0.1"}
+{"ts": "2026-05-04T21:36:38.894402+00:00", "level": "INFO", "logger": "ml_linguo", "message": "в†’ POST /correct_paragraph", "src_module": "app", "src_func": "request_logging_middleware", "src_line": 275, "request_id": "66635203", "method": "POST", "path": "/correct_paragraph", "client_ip": "127.0.0.1"}
+{"ts": "2026-05-04T21:36:38.897924+00:00", "level": "INFO", "logger": "ml_linguo", "message": "Correct paragraph: chars=30", "src_module": "app", "src_func": "correct_paragraph_checking", "src_line": 565, "request_id": "66635203"}
+{"ts": "2026-05-04T21:36:39.176035+00:00", "level": "INFO", "logger": "ml_linguo", "message": "Paragraph corrected: changes=6, took=277.3ms", "src_module": "app", "src_func": "correct_paragraph_checking", "src_line": 576, "request_id": "66635203", "duration_ms": 277.3}
+{"ts": "2026-05-04T21:36:39.177050+00:00", "level": "INFO", "logger": "ml_linguo", "message": "в†ђ POST /correct_paragraph 200 (281.9ms)", "src_module": "app", "src_func": "request_logging_middleware", "src_line": 307, "request_id": "66635203", "method": "POST", "path": "/correct_paragraph", "status": 200, "duration_ms": 281.9, "client_ip": "127.0.0.1"}
+{"ts": "2026-05-04T21:36:40.086523+00:00", "level": "INFO", "logger": "ml_linguo", "message": "в†’ POST /correct_paragraph", "src_module": "app", "src_func": "request_logging_middleware", "src_line": 275, "request_id": "9a4515d6", "method": "POST", "path": "/correct_paragraph", "client_ip": "127.0.0.1"}
+{"ts": "2026-05-04T21:36:40.090577+00:00", "level": "INFO", "logger": "ml_linguo", "message": "Correct paragraph: chars=30", "src_module": "app", "src_func": "correct_paragraph_checking", "src_line": 565, "request_id": "9a4515d6"}
+{"ts": "2026-05-04T21:36:40.430145+00:00", "level": "INFO", "logger": "ml_linguo", "message": "Paragraph corrected: changes=6, took=338.4ms", "src_module": "app", "src_func": "correct_paragraph_checking", "src_line": 576, "request_id": "9a4515d6", "duration_ms": 338.4}
+{"ts": "2026-05-04T21:36:40.432151+00:00", "level": "INFO", "logger": "ml_linguo", "message": "в†ђ POST /correct_paragraph 200 (344.6ms)", "src_module": "app", "src_func": "request_logging_middleware", "src_line": 307, "request_id": "9a4515d6", "method": "POST", "path": "/correct_paragraph", "status": 200, "duration_ms": 344.6, "client_ip": "127.0.0.1"}
+{"ts": "2026-05-04T21:36:41.383143+00:00", "level": "INFO", "logger": "ml_linguo", "message": "в†’ POST /correct_paragraph", "src_module": "app", "src_func": "request_logging_middleware", "src_line": 275, "request_id": "5cf468f5", "method": "POST", "path": "/correct_paragraph", "client_ip": "127.0.0.1"}
+{"ts": "2026-05-04T21:36:41.387088+00:00", "level": "INFO", "logger": "ml_linguo", "message": "Correct paragraph: chars=30", "src_module": "app", "src_func": "correct_paragraph_checking", "src_line": 565, "request_id": "5cf468f5"}
+{"ts": "2026-05-04T21:36:41.684141+00:00", "level": "INFO", "logger": "ml_linguo", "message": "Paragraph corrected: changes=6, took=297.2ms", "src_module": "app", "src_func": "correct_paragraph_checking", "src_line": 576, "request_id": "5cf468f5", "duration_ms": 297.2}
+{"ts": "2026-05-04T21:36:41.686192+00:00", "level": "INFO", "logger": "ml_linguo", "message": "в†ђ POST /correct_paragraph 200 (302.3ms)", "src_module": "app", "src_func": "request_logging_middleware", "src_line": 307, "request_id": "5cf468f5", "method": "POST", "path": "/correct_paragraph", "status": 200, "duration_ms": 302.3, "client_ip": "127.0.0.1"}
+{"ts": "2026-05-04T21:36:42.578601+00:00", "level": "INFO", "logger": "ml_linguo", "message": "в†’ POST /correct_paragraph", "src_module": "app", "src_func": "request_logging_middleware", "src_line": 275, "request_id": "8d9748ea", "method": "POST", "path": "/correct_paragraph", "client_ip": "127.0.0.1"}
+{"ts": "2026-05-04T21:36:42.583600+00:00", "level": "INFO", "logger": "ml_linguo", "message": "Correct paragraph: chars=30", "src_module": "app", "src_func": "correct_paragraph_checking", "src_line": 565, "request_id": "8d9748ea"}
+{"ts": "2026-05-04T21:36:42.878745+00:00", "level": "INFO", "logger": "ml_linguo", "message": "Paragraph corrected: changes=6, took=294.5ms", "src_module": "app", "src_func": "correct_paragraph_checking", "src_line": 576, "request_id": "8d9748ea", "duration_ms": 294.5}
+{"ts": "2026-05-04T21:36:42.880285+00:00", "level": "INFO", "logger": "ml_linguo", "message": "в†ђ POST /correct_paragraph 200 (301.1ms)", "src_module": "app", "src_func": "request_logging_middleware", "src_line": 307, "request_id": "8d9748ea", "method": "POST", "path": "/correct_paragraph", "status": 200, "duration_ms": 301.1, "client_ip": "127.0.0.1"}
+{"ts": "2026-05-04T21:36:43.725867+00:00", "level": "INFO", "logger": "ml_linguo", "message": "в†’ POST /correct_paragraph", "src_module": "app", "src_func": "request_logging_middleware", "src_line": 275, "request_id": "c7bcc73f", "method": "POST", "path": "/correct_paragraph", "client_ip": "127.0.0.1"}
+{"ts": "2026-05-04T21:36:43.729873+00:00", "level": "INFO", "logger": "ml_linguo", "message": "Correct paragraph: chars=30", "src_module": "app", "src_func": "correct_paragraph_checking", "src_line": 565, "request_id": "c7bcc73f"}
+{"ts": "2026-05-04T21:36:44.074796+00:00", "level": "INFO", "logger": "ml_linguo", "message": "Paragraph corrected: changes=6, took=344.8ms", "src_module": "app", "src_func": "correct_paragraph_checking", "src_line": 576, "request_id": "c7bcc73f", "duration_ms": 344.8}
+{"ts": "2026-05-04T21:36:44.076806+00:00", "level": "INFO", "logger": "ml_linguo", "message": "в†ђ POST /correct_paragraph 200 (349.6ms)", "src_module": "app", "src_func": "request_logging_middleware", "src_line": 307, "request_id": "c7bcc73f", "method": "POST", "path": "/correct_paragraph", "status": 200, "duration_ms": 349.6, "client_ip": "127.0.0.1"}
+{"ts": "2026-05-04T21:36:44.878239+00:00", "level": "INFO", "logger": "ml_linguo", "message": "в†’ POST /correct_paragraph", "src_module": "app", "src_func": "request_logging_middleware", "src_line": 275, "request_id": "c523af5b", "method": "POST", "path": "/correct_paragraph", "client_ip": "127.0.0.1"}
+{"ts": "2026-05-04T21:36:44.881298+00:00", "level": "INFO", "logger": "ml_linguo", "message": "Correct paragraph: chars=30", "src_module": "app", "src_func": "correct_paragraph_checking", "src_line": 565, "request_id": "c523af5b"}
+{"ts": "2026-05-04T21:36:45.232964+00:00", "level": "INFO", "logger": "ml_linguo", "message": "Paragraph corrected: changes=6, took=350.3ms", "src_module": "app", "src_func": "correct_paragraph_checking", "src_line": 576, "request_id": "c523af5b", "duration_ms": 350.3}
+{"ts": "2026-05-04T21:36:45.234097+00:00", "level": "INFO", "logger": "ml_linguo", "message": "в†ђ POST /correct_paragraph 200 (355.8ms)", "src_module": "app", "src_func": "request_logging_middleware", "src_line": 307, "request_id": "c523af5b", "method": "POST", "path": "/correct_paragraph", "status": 200, "duration_ms": 355.8, "client_ip": "127.0.0.1"}
+{"ts": "2026-05-04T21:36:46.108877+00:00", "level": "INFO", "logger": "ml_linguo", "message": "в†’ POST /correct_paragraph", "src_module": "app", "src_func": "request_logging_middleware", "src_line": 275, "request_id": "0571bcf3", "method": "POST", "path": "/correct_paragraph", "client_ip": "127.0.0.1"}
+{"ts": "2026-05-04T21:36:46.115877+00:00", "level": "WARNING", "logger": "ml_linguo", "message": "в†ђ POST /correct_paragraph 429 (5.9ms)", "src_module": "app", "src_func": "request_logging_middleware", "src_line": 307, "request_id": "0571bcf3", "method": "POST", "path": "/correct_paragraph", "status": 429, "duration_ms": 5.9, "client_ip": "127.0.0.1"}
+{"ts": "2026-05-04T21:37:14.877075+00:00", "level": "INFO", "logger": "ml_linguo", "message": "в†’ POST /word_level", "src_module": "app", "src_func": "request_logging_middleware", "src_line": 275, "request_id": "122d91f5", "method": "POST", "path": "/word_level", "client_ip": "127.0.0.1"}
+{"ts": "2026-05-04T21:37:14.880076+00:00", "level": "INFO", "logger": "ml_linguo", "message": "Word level request: word='Crazy'", "src_module": "app", "src_func": "word_level", "src_line": 376, "request_id": "122d91f5", "word": "Crazy"}
+{"ts": "2026-05-04T21:37:17.465743+00:00", "level": "INFO", "logger": "ml_linguo", "message": "Word level result: word='Crazy' в†’ A2, took=2585.3ms", "src_module": "app", "src_func": "word_level", "src_line": 384, "request_id": "122d91f5", "duration_ms": 2585.3, "word": "Crazy"}
+{"ts": "2026-05-04T21:37:17.466760+00:00", "level": "INFO", "logger": "ml_linguo", "message": "в†ђ POST /word_level 200 (2589.4ms)", "src_module": "app", "src_func": "request_logging_middleware", "src_line": 307, "request_id": "122d91f5", "method": "POST", "path": "/word_level", "status": 200, "duration_ms": 2589.4, "client_ip": "127.0.0.1"}
