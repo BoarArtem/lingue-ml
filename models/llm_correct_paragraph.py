@@ -9,7 +9,8 @@ from langchain_core.messages import SystemMessage, HumanMessage
 model_name = os.getenv("OLLAMA_MODEL_NAME", "qwen2.5:7b")
 llm_configuration = ChatOllama(
     model=model_name,
-    temperature=0
+    temperature=0,
+    base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 )
 
 
