@@ -11,6 +11,7 @@ from inference.topic_predictor import TopicPredictor
 from models.b2_predictor import B2PredictorModel
 from models.llm_sentence_generate import llm_sentence_generate
 from models.llm_word_level import llm_word_level
+from models.card_evaluator import CardEvaluator
 from models.llm_correct_paragraph import correct_paragraph, get_changed_word, word_pair
 from data.tokenizer import (
     sentence_preprocess_english,
@@ -53,6 +54,12 @@ try:
 except Exception as e:
     print(f"Ошибка загрузки TopicPredictor: {e}")
     topic_predictor = None
+
+try:
+    card_evaluator = CardEvaluator()
+except Exception as e:
+    print(f"Ошибка загрузки CardEvaluator: {e}")
+    card_evaluator = None
 
 try:
     predictor: B2PredictorModel = joblib.load(f"{model_dir}/b2_model.pkl")
@@ -384,16 +391,11 @@ def sentence_level(req: SentenceLevelRequest):
 def sentence_context_level(req: SentenceContextLevel):
     pass
 
-@app.post(
-    "sentence_context_rate",
-    tags=["LLM"],
-    summary="Модель которая способна оценивать использованное слово юзера в контексте",
-    description="Подаёться слово и предложение. Дальше предложение разбивается на токены и просматриваеться на ошибки. Если ошибка имеються - уровень предложения со связкой снизиться. Если нету, то алгоритм ищет слово в предложении, оценивает и решает, подходит оно в предложении или нет. Потом оценивает сложность соединения слова с другой частью.",
-    response_description="Результат связки: 1, 2, 3, 4",
-)
-def sentence_context_rate(req: SentenceContextRate):
-    pass
 
+class SentenceContextRate(BaseModel):
+    word: str = Field(example="go home")
+    user_sentence: str = Field(example="I will go home tomorrow")
+    
 @app.post(
     "/check_plagiarism",
     tags=["Machine Learning"],
@@ -403,3 +405,23 @@ def sentence_context_rate(req: SentenceContextRate):
 )
 def check_plagiarism(req: CheckPlagiarism):
     pass
+
+@app.post(
+    "/sentence_rate",
+    tags=["ML Scoring"],
+    summary="Оценка предложения для FSRS (1-4)",
+    description="Оценивает наличие слова (с учетом морфологии), грамматику и сложность конструкции через Qwen (асинхронно). Возвращает грейд от 1 до 4."
+)
+async def evaluate_sentence_fsrs(req: SentenceContextRate):
+    if not card_evaluator:
+        raise HTTPException(status_code=500, detail="Сервис оценки временно недоступен")
+
+    try:
+        grade = await card_evaluator.get_fsrs_grade(
+            term=req.word,
+            sentence=req.user_sentence
+        )
+        return {"grade": grade}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
