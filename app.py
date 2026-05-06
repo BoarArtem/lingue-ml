@@ -264,9 +264,8 @@ class SentenceContextLevel(BaseModel):
     "/word_level",
     tags=["LLM"],
     summary="Определить уровень слова CEFR",
-    description="""
-Определяет уровень сложности слова по шкале **CEFR**.
-
+    description="Определяет уровень сложности слова по шкале **CEFR**.",
+)
 class CheckPlagiarism(BaseModel):
     user_text: str = Field(example="bla bla bla bla bla bla bla bla")
 
@@ -352,8 +351,8 @@ async def request_logging_middleware(request: Request, call_next):
     "/predict",
     tags=["Machine Learning"],
     summary="ML предсказание",
-    description="""
-Использует обученную ML модель `B2PredictorModel`.
+    description="Использует обученную ML модель `B2PredictorModel`.",
+)
 
 @app.get("/health", tags=["System"])
 def health(request: Request):
@@ -626,7 +625,6 @@ def predict_topics(request: Request, req: TopicRequest):
 
 @app.post("/correct_paragraph", tags=["LLM"],
           summary="Исправление ошибок в предложении")
-@limiter.limit("10/minute")
 def correct_paragraph_checking(request: Request, req: CorrectParagraphRequest):
     rid = getattr(request.state, "request_id", "-")
     logger.info(

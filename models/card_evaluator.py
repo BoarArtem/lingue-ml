@@ -21,7 +21,7 @@ class CardEvaluator:
 
     def _check_grammar(self, sentence: str) -> bool:
         correct_sentence = correct_paragraph(sentence)
-        errors = get_changed_word(sentence)
+        errors = get_changed_word(sentence, correct_sentence)
         return len(errors) == 0
 
     def _evaluate_complexity(self, sentence: str) -> int:
@@ -59,3 +59,7 @@ class CardEvaluator:
             
         complexity = self._evaluate_complexity(sentence)
         return 3 if complexity < 3 else 4
+
+if __name__ == "__main__":
+    evaluator = CardEvaluator()
+    print(evaluator.get_fsrs_grade("apple", "The apple is red and sweet."))
