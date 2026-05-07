@@ -186,6 +186,12 @@ except FileNotFoundError:
     logger.warning("B2PredictorModel not found on disk — using untrained instance")
 
 try:
+    spam_classification = joblib.load(f"{model_dir}/spam_classification_model_60.pth")
+    logger.info("SpamClassificationModel loaded successfully")
+except FileNotFoundError:
+    logger.error("Failed to load SpamClassificationModel", exc_info=True)
+
+try:
     anti_plagiarism = AntiPlagiarismModelInference()
     logger.info("AntiPlagiarismModelInference loaded successfully")
 except Exception as e:
@@ -330,6 +336,7 @@ def health(request: Request):
         "word2vec":    ve_model is not None,
         "b2_model":    predictor.model is not None,
         "topic_model": topic_predictor is not None,
+        "spam_classification_model": spam_classification is not None
     }
     logger.debug("Health check", extra={"request_id": getattr(request.state, "request_id", "-")})
     return status
@@ -642,12 +649,6 @@ def check_plagiarism(request: Request, req: CheckPlagiarismRequest):
 
     logger.info(f"Plagiarism check result: {label}")
 
-    return {
-        "User sentence": original_user,
-        "AI sentence": original_ai,
-        "Changing pair": word_pair(incorrect_words, correct_words)
-    }
-
 @app.post(
     "/spam_classification",
     tags=["Machine Learning"],
@@ -655,5 +656,23 @@ def check_plagiarism(request: Request, req: CheckPlagiarismRequest):
     description="ИИ перед тем как пользователь выложит свою колоду, проходить по каждой карточке и даёт метку (spam | ham), дальше все карточки с пометкой спам удаляют из колоды и оставляют только ham",
     response_description="Метка класса: spam or ham"
 )
-def spam_classification(req: SpamClassificationRequest):
-    return {'class': spam_or_ham(req.user_sentence)}
+@limiter.limit("30/minute")
+def spam_classification(request: Request, req: SpamClassificationRequest):
+    rid = getattr(request.state, "request_id", "-")
+    logger.info(
+        f"Spam classification: chars={len(req.user_sentence)}",
+        extra={"request_id": rid}
+    )
+    t0 = time.perf_counter()
+    try:
+        result = spam_or_ham(req.user_sentence)
+        ms = round((time.perf_counter() - t0) * 1000, 1)
+        logger.info(
+            f"Spam classification result: '{result}', took={ms}ms",
+            extra={"request_id": rid, "prediction": result, "duration_ms": ms}
+        )
+        return {"class": result}
+    except Exception:
+        logger.error("Spam classification error", exc_info=True,
+                     extra={"request_id": rid})
+        raise HTTPException(status_code=500, detail="Spam classification error")
