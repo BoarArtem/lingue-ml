@@ -8,7 +8,7 @@ load_dotenv()
 
 model = ChatOllama(model=os.getenv("OLLAMA_MODEL_NAME", "qwen2.5:7b"),
                    temperature=0,
-                   base_url=os.getenv("OLLAMA_BASE_URL")
+                   base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
                    )
 
 labels = {"AI": 0,
