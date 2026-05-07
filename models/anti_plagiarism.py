@@ -69,7 +69,7 @@ def convert_text_to_label(text):
     return labels[text.strip().upper()]
 
 if __name__ == "__main__":
-    text = "Nigga, nigga, nigga"
+    text = "Hello, neighbour"
     score = get_plagiarism_score(text)
     label = convert_text_to_label(score)
     print(f"Plagiarism score: {score}, Label: {label}")
