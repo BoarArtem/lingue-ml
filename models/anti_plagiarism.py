@@ -6,7 +6,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-model = ChatOllama(model=os.getenv("OLLAMA_MODEL_NAME") or "qwen2.5:7b", temperature=0)
+model = ChatOllama(model=os.getenv("OLLAMA_MODEL_NAME") or "qwen2.5:7b",
+                   temperature=0,
+                   base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"))
 
 labels = {"AI": 0,
           "HUMAN": 1}
