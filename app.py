@@ -601,6 +601,7 @@ def sentence_context_rate(request: Request, req: SentenceContextRate):
 
 @app.post("/check_plagiarism", tags=["Machine Learning"],
           summary="Проверка текста на AI-плагиат")
+@limiter.limit("10/minute")
 def check_plagiarism(request: Request, req: CheckPlagiarismRequest):
 
     if req.user_text is None:
