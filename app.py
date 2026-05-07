@@ -186,10 +186,27 @@ except FileNotFoundError:
     logger.warning("B2PredictorModel not found on disk — using untrained instance")
 
 try:
-    spam_classification = joblib.load(f"{model_dir}/spam_classification_model_60.pth")
+    spam_classifier_model = SpamClassificationModel(
+        vocab_size=10000,
+        embed_dim=128,
+        hidden_size=256,
+        num_layers=2,
+    ).to(device)
+
+    spam_classifier_model.load_state_dict(
+        torch.load(
+            f"{model_dir}/spam_classification_model_60.pth",
+            map_location=device
+        )
+    )
+
+    spam_classifier_model.eval()
+
     logger.info("SpamClassificationModel loaded successfully")
-except FileNotFoundError:
+
+except Exception:
     logger.error("Failed to load SpamClassificationModel", exc_info=True)
+    spam_classifier_model = None
 
 try:
     anti_plagiarism = AntiPlagiarismModelInference()
@@ -648,6 +665,9 @@ def check_plagiarism(request: Request, req: CheckPlagiarismRequest):
             raise HTTPException(status_code=500, detail=f"Error in get_index_from_label: {e}")
 
     logger.info(f"Plagiarism check result: {label}")
+
+    # ВСЁ РАДИ ТЕБЯ!!!!!! ДЕЛАЮ ТВОЮ РАБОТУ!!!!!! Я РАБ ЭТОЙ СИСТЕМЫ!!!!!!
+    return {"label": label}
 
 @app.post(
     "/spam_classification",
