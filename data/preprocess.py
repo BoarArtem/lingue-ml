@@ -71,7 +71,7 @@ def spam_classification_preprocess(filepath):
     return data
 
 
-# if __name__ == "__main__":
-#     data = spam_classification_preprocess("datasets/spam_Emails_data.csv")
-#
-#     print(data.head())
+if __name__ == "__main__":
+    data = spam_classification_preprocess("datasets/spam_Emails_data.csv")
+
+    print(data.head())

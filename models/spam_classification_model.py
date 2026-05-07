@@ -1,8 +1,13 @@
+import os
+
 import torch.optim
+import torch
 
 from data.spam_classification import dataset
 from torch import nn
 from data.spam_classification.dataset import loader
+
+os.makedirs("inference", exist_ok=True)
 
 # model class
 class SpamClassificationModel(nn.Module):
@@ -44,10 +49,12 @@ def train(epochs):
 
     for epoch in range(epochs):
         total_loss = 0
+        correct = 0
+        total = 0
 
         for X_batch, y_batch in loader:
             X_batch = X_batch.to(device).long()
-            y_batch = y_batch.to(device)
+            y_batch = y_batch.to(device).long()
 
             logits = model(X_batch)
             loss = criterion(logits, y_batch)
@@ -58,8 +65,18 @@ def train(epochs):
 
             total_loss += loss.item()
 
-        print(f"Epoch {epoch+1}, Loss: {total_loss:.4f}")
+            preds = torch.argmax(logits, dim=1)
+            correct += (preds == y_batch).sum().item()
+            total += y_batch.size(0)
 
-    # save model
-    torch.save(model.state_dict(), "../inference/spam_classification_model.pth")
+        print(f"Epoch {epoch+1}/{epochs}, Loss: {total_loss:.4f}, Accuracy: {(correct / total)*100:.4f}")
 
+        # save model
+        if (epoch + 1) % 20 == 0:
+            torch.save(model.state_dict(), f"inference/spam_classification_model_{epoch+1}.pth")
+
+    torch.save(model.state_dict(), f"inference/spam_classification_model_{epochs}.pth")
+
+
+if __name__ == "__main__":
+    print(train(25))
