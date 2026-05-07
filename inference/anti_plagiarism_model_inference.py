@@ -1,4 +1,4 @@
-from models.anti_plagiarism import load_anti_plagiarism_model
+from models.anti_plagiarism_previous import load_anti_plagiarism_model
 import torch
 from data.ai_or_human.dataset_executor import tokenizer, encode_text
 from data.ai_or_human.dataset_executor import LABEL_MAP
