@@ -21,3 +21,4 @@ data/*.bin
 /data/ljspeech/LJSpeech-1.1/wavs/*.wav
 *.pth
 data/
+data/raw/
