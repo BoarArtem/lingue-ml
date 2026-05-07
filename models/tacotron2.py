@@ -374,7 +374,7 @@ def prepare_dataloader(dataset_path: str, audio_dir_path: str, batch_size: int, 
     dataset = get_dataset(dataset_path, audio_dir_path)
     return get_dataloader(dataset, batch_size, shuffle)
 
-def train(model, dataloader, epochs, loss_fn, optimizer):
+def train_test(model, train_dataloader, epochs, loss_fn, optimizer, test_dataloader = None):
     model.to(device)
     model.train()
 
@@ -404,12 +404,33 @@ def train(model, dataloader, epochs, loss_fn, optimizer):
 
             total_loss += loss.item()
 
-            print(
-                f'Epoch [{epoch + 1}/{epochs}], Batch [{batch_idx + 1}/{len(dataloader)}], Loss: {loss.item():.4f}'
-            )
+        if test_dataloader is not None:
+            model.eval()
+
+            with torch.no_grad():
+                total_mel_loss = 0
+                total_mel_post_loss = 0
+                total_gate_loss = 0
+
+                for batch_idx, (text, audio) in enumerate(test_dataloader):
+                    text = text.to(device)
+                    audio = audio.to(device)
+
+                    mel_target = audio.transpose(1, 2)
+                    mel_outputs, mel_outputs_post, stop_outputs, attention_weights, vocoder_outputs = model(text, mel_target)
+
+                    gate_target = torch.zeros(mel_target.size(0), mel_target.size(1), device=device)
+                    gate_target[:, -1] = 1.0
+
+                    mel_loss, mel_post_loss, gate_loss = loss_fn(mel_outputs, mel_outputs_post, stop_outputs, mel_target, gate_target)
+
+                    total_mel_loss += mel_loss.item()
+                    total_mel_post_loss += mel_post_loss.item()
+                    total_gate_loss += gate_loss.item()
+
 
         print(
-            f'Epoch [{epoch + 1}/{epochs}], Loss: {total_loss / len(dataloader):.4f}'
+            f'Epoch [{epoch + 1}/{epochs}], Loss: {total_loss / len(dataloader):.4f}, Mel Loss: {total_mel_loss / len(dataloader):.4f}, Mel Post Loss: {total_mel_post_loss / len(dataloader):.4f}, Gate Loss: {total_gate_loss / len(dataloader):.4f}'
         )
 
         if epoch % 10 == 0:
@@ -421,10 +442,10 @@ def train(model, dataloader, epochs, loss_fn, optimizer):
 
 if __name__ == '__main__':
     print("Starting training...")
-    model = load_tacotron2(f"{PROJECT_ROOT}/tacotron2_epoch_31.pth")
+    model = load_tacotron2(f"{PROJECT_ROOT}/tacotron2_final.pth")
     loss_fn = get_tacotron2_loss()
     optimizer = get_optimizer(model, 1e-4)
     dataloader = prepare_dataloader(f'{PROJECT_ROOT}/data/ljspeech/LJSpeech-1.1/metadata.csv',
                                  f'{PROJECT_ROOT}/data/ljspeech/LJSpeech-1.1/wavs',
                                  32)
-    train(model, dataloader, 100, loss_fn, optimizer)
+    train_test(model, dataloader, 100, loss_fn, optimizer)
