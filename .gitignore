@@ -16,5 +16,9 @@ data/*.bin
 /data/datasets/spam_Emails_data.csv
 #/inference/spam_classification_model.pth
 /data/ljspeech/LJSpeech-1.1/wavs/*.wav
+/data/ljspeech/fleurs/de_de/train
+/data/ljspeech/fleurs/de_de/test
+/data/ljspeech/fleurs/en_us/train
+/data/ljspeech/fleurs/en_us/test
 *.pth
 .DS_Store
