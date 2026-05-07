@@ -154,7 +154,7 @@ app.add_middleware(SlowAPIMiddleware)
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
-model_dir = os.getenv("MODEL_DIR", "storage/models")
+model_dir = os.getenv("MODEL_DIR", "/models")
 
 logger.info("Loading Word2Vec model...")
 ve_model = Word2Vec.load(f"{model_dir}/word2vec.model")
@@ -225,7 +225,7 @@ class SentenceContextRate(BaseModel):
     word: str = Field(example="go home")
     user_sentence: str = Field(example="I will go home tomorrow")
 
-class CheckPlagiarism(BaseModel):
+class CheckPlagiarismRequest(BaseModel):
     user_text: str = Field(example="bla bla bla bla bla bla bla bla")
     get_index: bool = Field(default=False)
 
@@ -601,17 +601,29 @@ def sentence_context_rate(request: Request, req: SentenceContextRate):
 
 @app.post("/check_plagiarism", tags=["Machine Learning"],
           summary="Проверка текста на AI-плагиат")
-def check_plagiarism(request: Request, req: CheckPlagiarism):
+def check_plagiarism(request: Request, req: CheckPlagiarismRequest):
 
     if req.user_text is None:
+        logger.warning("user_text is required")
         raise HTTPException(status_code=400, detail="user_text is required")
 
     if anti_plagiarism is None:
+        logger.error("Anti-plagiarism model is not initialized")
         raise HTTPException(status_code=500, detail="Anti-plagiarism model is not initialized")
 
-    label = anti_plagiarism.get_label(req.user_text)
+    try:
+        label = anti_plagiarism.get_label(req.user_text)
+    except Exception as e:
+        logger.error("Error in check_plagiarism", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error in check_plagiarism: {e}")
 
     if req.get_index:
-        label = anti_plagiarism.get_index_from_label(label)
+        try:
+            label = anti_plagiarism.get_index_from_label(label)
+        except Exception as e:
+            logger.error("Error in get_index_from_label", exc_info=True)
+            raise HTTPException(status_code=500, detail=f"Error in get_index_from_label: {e}")
+
+    logger.info(f"Plagiarism check result: {label}")
 
     return {"label": label}
