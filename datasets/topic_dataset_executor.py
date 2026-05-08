@@ -77,7 +77,7 @@ if __name__ == "__main__":
     
     df = pd.DataFrame({"text": texts, "label": labels})
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    save_path = os.path.join(current_dir, "topic_dataset.csv")
+    save_path = os.path.join(current_dir, "../data/raw/topic_dataset.csv")
     
     df.to_csv(save_path, index=False, encoding='utf-8')
     print(f"Сохранено: {save_path} | Всего строк: {len(df)}")

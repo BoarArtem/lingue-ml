@@ -44,7 +44,7 @@ def predict_days(user_data: dict) -> int:
 
 if __name__ == "__main__":
 
-    train_model("../data/datasets/dataset_b2.csv")
+    train_model("../data/raw/dataset_b2.csv")
 
     test_user = {
         'unique_words': 1500,

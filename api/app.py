@@ -82,7 +82,7 @@ def build_logger(name: str = "ml_linguo") -> logging.Logger:
     - RotatingFileHandler (файл) — JSON, ротация 10MB × 5 файлов
     - Отдельный файл для ошибок (только WARNING+)
     """
-    os.makedirs("logs", exist_ok=True)
+    os.makedirs("../logs", exist_ok=True)
     log = logging.getLogger(name)
     log.setLevel(logging.DEBUG)
     log.propagate = False
@@ -95,7 +95,7 @@ def build_logger(name: str = "ml_linguo") -> logging.Logger:
     ))
 
     file_handler = logging.handlers.RotatingFileHandler(
-        filename="logs/app.log",
+        filename="../logs/app.log",
         maxBytes=10 * 1024 * 1024,   # 10 MB
         backupCount=5,
         encoding="utf-8"
@@ -104,7 +104,7 @@ def build_logger(name: str = "ml_linguo") -> logging.Logger:
     file_handler.setFormatter(JSONFormatter())
 
     error_handler = logging.handlers.RotatingFileHandler(
-        filename="logs/errors.log",
+        filename="../logs/errors.log",
         maxBytes=5 * 1024 * 1024,    # 5 MB
         backupCount=3,
         encoding="utf-8"
