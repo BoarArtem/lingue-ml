@@ -3,7 +3,7 @@ import joblib
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-from models.b2_predictor import B2PredictorModel
+from models.ml.b2_predictor import B2PredictorModel
 
 
 MODEL_PATH = "b2_model.pkl"
