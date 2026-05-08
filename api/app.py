@@ -1,8 +1,6 @@
 import joblib
 import pandas as pd
-import torch
 from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi import Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -18,13 +16,10 @@ import uuid
 import traceback
 
 from inference.topic_predictor import TopicPredictor
-from models import anti_plagiarism
 from models.b2_predictor import B2PredictorModel
 from models.llm_sentence_generate import llm_sentence_generate
 from models.llm_word_level import llm_word_level
 from models.llm_correct_paragraph import correct_paragraph, get_changed_word, word_pair
-from inference.spam_classification_inference import spam_or_ham
-from inference.anti_plagiarism_model_inference import AntiPlagiarismModelInference
 
 from data.tokenizer import (
     sentence_preprocess_english,
@@ -34,7 +29,6 @@ from data.tokenizer import (
     sentence_preprocess_german,
     sentence_preprocess_chinese
 )
-from models.spam_classification_model import SpamClassificationModel
 
 import logging
 import logging.handlers
@@ -142,24 +136,16 @@ ML сервис для Linguo.
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://34.30.102.15",
+        "http://34.10.240.6",
+        "https://api.ml.linguo.foo",
+    ],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-model_dir = os.getenv("MODEL_DIR", "/models")  # for docker testing/production
-ve_model = Word2Vec.load(f"{model_dir}/word2vec.model")# - for my local testing
-# ve_model = Word2Vec.load(f"{model_dir}/word2vec.model")
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = SpamClassificationModel(
-    vocab_size=10000,
-    embed_dim=128,
-    hidden_size=256,
-    num_layers=2,
-).to(device)
-model.load_state_dict(torch.load(f"{model_dir}/spam_classification_model_60.pth", map_location=device))
-model.eval()
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 app.add_middleware(SlowAPIMiddleware)
@@ -185,35 +171,6 @@ except FileNotFoundError:
     predictor = B2PredictorModel()
     logger.warning("B2PredictorModel not found on disk — using untrained instance")
 
-try:
-    spam_classifier_model = SpamClassificationModel(
-        vocab_size=10000,
-        embed_dim=128,
-        hidden_size=256,
-        num_layers=2,
-    ).to(device)
-
-    spam_classifier_model.load_state_dict(
-        torch.load(
-            f"{model_dir}/spam_classification_model_60.pth",
-            map_location=device
-        )
-    )
-
-    spam_classifier_model.eval()
-
-    logger.info("SpamClassificationModel loaded successfully")
-
-except Exception:
-    logger.error("Failed to load SpamClassificationModel", exc_info=True)
-    spam_classifier_model = None
-
-try:
-    anti_plagiarism = AntiPlagiarismModelInference()
-    logger.info("AntiPlagiarismModelInference loaded successfully")
-except Exception as e:
-    logger.error("Failed to load AntiPlagiarismModelInference", exc_info=True)
-    anti_plagiarism = None
 
 class TopicRequest(BaseModel):
     sentences: list[str] = Field(..., example=["I love coding in Python"])
@@ -250,9 +207,6 @@ class PreprocessRequest(BaseModel):
 class CorrectParagraphRequest(BaseModel):
     user_sentence: str = Field(example="I ate pizza yesterday")
 
-class SpamClassificationRequest(BaseModel):
-    user_sentence: str = Field(example="sex sex drugs drugs gun")
-
 class SentenceLevelRequest(BaseModel):
     user_sentence: str = Field(example="I ate apple yesterday")
 
@@ -263,9 +217,8 @@ class SentenceContextRate(BaseModel):
     word: str = Field(example="go home")
     user_sentence: str = Field(example="I will go home tomorrow")
 
-class CheckPlagiarismRequest(BaseModel):
+class CheckPlagiarism(BaseModel):
     user_text: str = Field(example="bla bla bla bla bla bla bla bla")
-    get_index: bool = Field(default=False)
 
 
 @app.on_event("startup")
@@ -353,7 +306,6 @@ def health(request: Request):
         "word2vec":    ve_model is not None,
         "b2_model":    predictor.model is not None,
         "topic_model": topic_predictor is not None,
-        "spam_classification_model": spam_classification is not None
     }
     logger.debug("Health check", extra={"request_id": getattr(request.state, "request_id", "-")})
     return status
@@ -638,61 +590,12 @@ def sentence_context_rate(request: Request, req: SentenceContextRate):
     )
     raise HTTPException(status_code=501, detail="Not implemented")
 
+
 @app.post("/check_plagiarism", tags=["Machine Learning"],
           summary="Проверка текста на AI-плагиат")
-@limiter.limit("10/minute")
-def check_plagiarism(request: Request, req: CheckPlagiarismRequest):
-
-    if req.user_text is None:
-        logger.warning("user_text is required")
-        raise HTTPException(status_code=400, detail="user_text is required")
-
-    if anti_plagiarism is None:
-        logger.error("Anti-plagiarism model is not initialized")
-        raise HTTPException(status_code=500, detail="Anti-plagiarism model is not initialized")
-
-    try:
-        label = anti_plagiarism.get_label(req.user_text)
-    except Exception as e:
-        logger.error("Error in check_plagiarism", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Error in check_plagiarism: {e}")
-
-    if req.get_index:
-        try:
-            label = anti_plagiarism.get_index_from_label(label)
-        except Exception as e:
-            logger.error("Error in get_index_from_label", exc_info=True)
-            raise HTTPException(status_code=500, detail=f"Error in get_index_from_label: {e}")
-
-    logger.info(f"Plagiarism check result: {label}")
-
-    # ВСЁ РАДИ ТЕБЯ!!!!!! ДЕЛАЮ ТВОЮ РАБОТУ!!!!!! Я РАБ ЭТОЙ СИСТЕМЫ!!!!!!
-    return {"label": label}
-
-@app.post(
-    "/spam_classification",
-    tags=["Machine Learning"],
-    summary="Классификация карточки на спам",
-    description="ИИ перед тем как пользователь выложит свою колоду, проходить по каждой карточке и даёт метку (spam | ham), дальше все карточки с пометкой спам удаляют из колоды и оставляют только ham",
-    response_description="Метка класса: spam or ham"
-)
-@limiter.limit("30/minute")
-def spam_classification(request: Request, req: SpamClassificationRequest):
-    rid = getattr(request.state, "request_id", "-")
-    logger.info(
-        f"Spam classification: chars={len(req.user_sentence)}",
-        extra={"request_id": rid}
+def check_plagiarism(request: Request, req: CheckPlagiarism):
+    logger.warning(
+        "check_plagiarism called but not implemented",
+        extra={"request_id": getattr(request.state, "request_id", "-")}
     )
-    t0 = time.perf_counter()
-    try:
-        result = spam_or_ham(req.user_sentence)
-        ms = round((time.perf_counter() - t0) * 1000, 1)
-        logger.info(
-            f"Spam classification result: '{result}', took={ms}ms",
-            extra={"request_id": rid, "prediction": result, "duration_ms": ms}
-        )
-        return {"class": result}
-    except Exception:
-        logger.error("Spam classification error", exc_info=True,
-                     extra={"request_id": rid})
-        raise HTTPException(status_code=500, detail="Spam classification error")
+    raise HTTPException(status_code=501, detail="Not implemented")
