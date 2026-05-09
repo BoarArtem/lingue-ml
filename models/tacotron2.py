@@ -4,6 +4,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 
 from data.ljspeech import LJSpeechDataset, get_dataloader
+from utils.general_training import apply_callbacks
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -403,6 +404,8 @@ def train_test(model, train_dataloader, epochs, loss_fn, optimizer, test_dataloa
             optimizer.step()
 
             total_loss += loss.item()
+
+            apply_callbacks(dataloader, total_loss)
 
         if test_dataloader is not None:
             model.eval()
