@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
-from data.ljspeech import LJSpeechDataset, get_dataloader
+# from data.ljspeech import LJSpeechDataset, get_dataloader
 from utils.general_training import apply_callbacks
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -385,7 +385,7 @@ def train_test(model, train_dataloader, epochs, loss_fn, optimizer, test_dataloa
 
         print(f'Epoch [{epoch + 1}/{epochs}]')
 
-        for batch_idx, (text, audio) in enumerate(dataloader):
+        for batch_idx, (text, audio) in enumerate(train_dataloader):
             text = text.to(device)
             audio = audio.to(device)
 
