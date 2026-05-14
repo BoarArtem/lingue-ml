@@ -71,9 +71,27 @@ class FleursDataset(Dataset):
 
         return sequence, mel_spectogram
 
+def collate_fn(batch):
+    """Pads variable-length text sequences and mel spectrograms to the max length in the batch."""
+    sequences, mels = zip(*batch)
+
+    # Pad text sequences to max length in batch
+    max_text_len = max(s.size(0) for s in sequences)
+    padded_sequences = torch.zeros(len(sequences), max_text_len, dtype=torch.long)
+    for i, s in enumerate(sequences):
+        padded_sequences[i, :s.size(0)] = s
+
+    # Pad mel spectrograms to max time length in batch (shape: [n_mels, T])
+    max_mel_len = max(m.size(1) for m in mels)
+    padded_mels = torch.zeros(len(mels), mels[0].size(0), max_mel_len)
+    for i, m in enumerate(mels):
+        padded_mels[i, :, :m.size(1)] = m
+
+    return padded_sequences, padded_mels
+
 def get_dataloader(dataset: Dataset, batch_size: int, shuffle: bool = True) -> DataLoader:
     """Function that retrieves a DataLoader from a Dataset."""
-    return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
+    return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, collate_fn=collate_fn)
 
 def extract_dict_of_loaders(dir_name: str, train_key: str, test_key: str, batch_size: int) -> dict[str, DataLoader]:
     """Function that extracts a dictionary of DataLoaders from a list of dataset directories."""
