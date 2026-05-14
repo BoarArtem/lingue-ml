@@ -1,5 +1,4 @@
 import pandas as pd
-from pymorphy3.analyzer import auto
 from torch.utils.data import Dataset, DataLoader
 
 import torch
