@@ -7,19 +7,25 @@ from langchain_core.messages import SystemMessage, HumanMessage
 
 
 model_name = os.getenv("OLLAMA_MODEL_NAME", "qwen2.5:7b")
-llm_configuration = ChatOllama(
-    model=model_name,
-    temperature=0,
-    base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-)
+_llm_configuration = None
+
+
+def get_llm():
+    global _llm_configuration
+    if _llm_configuration is None:
+        _llm_configuration = ChatOllama(
+            model=model_name,
+            temperature=0,
+            base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+        )
+    return _llm_configuration
 
 
 def correct_paragraph(user_sentence):
-    response = llm_configuration.invoke([
+    response = get_llm().invoke([
         SystemMessage(content="Исправь грамматические и пунктуационные ошибки. Верни только исправленный текст."),
         HumanMessage(content=user_sentence)
     ])
-
     return response.content
 
 
