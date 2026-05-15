@@ -42,10 +42,10 @@ import json
 import time
 from datetime import datetime, timezone
 
-nltk.download('punkt')
-nltk.download('punkt_tab')
-nltk.download('wordnet')
-nltk.download('stopwords')
+# nltk.download('punkt')
+# nltk.download('punkt_tab')
+# nltk.download('wordnet')
+# nltk.download('stopwords')
 
 
 class JSONFormatter(logging.Formatter):
