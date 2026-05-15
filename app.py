@@ -1,82 +1,32 @@
 print("START")
 
 import joblib
-print("joblib OK")
-
 import asyncio
-print("asyncio OK")
-
 import pandas as pd
-print("pandas OK")
-
 import torch
-print("torch OK")
-
 from fastapi import FastAPI, HTTPException
-print("fastapi OK")
-
 from fastapi.middleware.cors import CORSMiddleware
-print("cors OK")
-
 from fastapi import Request
-print("request OK")
-
 from fastapi.responses import JSONResponse
-print("JSONResponse OK")
-
 from slowapi import Limiter, _rate_limit_exceeded_handler
-print("slowapi OK")
-
 from slowapi.middleware import SlowAPIMiddleware
-print("SlowAPIMiddleware OK")
-
 from slowapi.util import get_remote_address
-print("get_remote_address OK")
-
 from slowapi.errors import RateLimitExceeded
-print("RateLimitExceeded OK")
-
 from pydantic import BaseModel, Field
-print("pydantic OK")
-
 from gensim.models import Word2Vec
-print("Word2Vec import OK")
-
 import os
-print("os OK")
-
 import nltk
-print("nltk OK")
-
 import uuid
-print("uuid OK")
-
 import traceback
-print("traceback OK")
-
 from inference.topic_predictor import TopicPredictor
-print("TopicPredictor import OK")
 
 from models import anti_plagiarism
-print("anti_plagiarism import OK")
-
 from models.b2_predictor import B2PredictorModel
-print("B2PredictorModel import OK")
-
 from models.llm_sentence_generate import llm_sentence_generate
-print("llm_sentence_generate import OK")
-
 from models.llm_word_level import llm_word_level
-print("llm_word_level import OK")
-
 from models.llm_correct_paragraph import correct_paragraph, get_changed_word, word_pair
-print("llm_correct_paragraph import OK")
-
 from inference.spam_classification_inference import spam_or_ham
-print("spam_or_ham import OK")
-
 from inference.anti_plagiarism_model_inference import AntiPlagiarismModelInference
-print("AntiPlagiarismModelInference import OK")
 
 from data.tokenizer import (
     sentence_preprocess_english,
@@ -86,27 +36,15 @@ from data.tokenizer import (
     sentence_preprocess_german,
     sentence_preprocess_chinese
 )
-print("tokenizer imports OK")
 
 from models.spam_classification_model import SpamClassificationModel
-print("SpamClassificationModel import OK")
-
 import logging
-print("logging OK")
-
 import logging.handlers
-print("logging.handlers OK")
-
 import json
-print("json OK")
-
 import time
-print("time OK")
-
 from datetime import datetime, timezone
-print("datetime OK")
 
-print("ALL IMPORTS FINISHED")
+logging.info("ALL IMPORTS FINISHED")
 
 
 # nltk.download('punkt')
