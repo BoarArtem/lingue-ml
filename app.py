@@ -3,6 +3,9 @@ print("START")
 import joblib
 print("joblib OK")
 
+import asyncio
+print("asyncio OK")
+
 import pandas as pd
 print("pandas OK")
 
@@ -645,32 +648,30 @@ def predict_topics(request: Request, req: TopicRequest):
 @app.post("/correct_paragraph", tags=["LLM"],
           summary="Исправление ошибок в предложении")
 @limiter.limit("10/minute")
-def correct_paragraph_checking(request: Request, req: CorrectParagraphRequest):
-    rid = getattr(request.state, "request_id", "-")
-    logger.info(
-        f"Correct paragraph: chars={len(req.user_sentence)}",
-        extra={"request_id": rid}
-    )
-    t0 = time.perf_counter()
-    try:
-        ai_sentence = correct_paragraph(req.user_sentence)
-        incorrect_words, correct_words = get_changed_word(req.user_sentence, ai_sentence)
-        ms = round((time.perf_counter() - t0) * 1000, 1)
+async def correct_paragraph_checking(request: Request, req: CorrectParagraphRequest):
 
-        changes = len(incorrect_words)
-        logger.info(
-            f"Paragraph corrected: changes={changes}, took={ms}ms",
-            extra={"request_id": rid, "duration_ms": ms}
-        )
-        return {
-            "User sentence":  req.user_sentence,
-            "AI sentence":    ai_sentence,
-            "Changing pair":  word_pair(incorrect_words, correct_words)
-        }
-    except Exception:
-        logger.error("Correct paragraph error", exc_info=True,
-                     extra={"request_id": rid})
-        raise HTTPException(status_code=500, detail="Correction error")
+    rid = getattr(request.state, "request_id", "-")
+
+    logger.info("Correct paragraph START", extra={"request_id": rid})
+
+    ai_sentence = await asyncio.to_thread(
+        correct_paragraph,
+        req.user_sentence
+    )
+
+    incorrect_words, correct_words = await asyncio.to_thread(
+        get_changed_word,
+        req.user_sentence,
+        ai_sentence
+    )
+
+    logger.info("Correct paragraph DONE", extra={"request_id": rid})
+
+    return {
+        "User sentence": req.user_sentence,
+        "AI sentence": ai_sentence,
+        "Changing pair": word_pair(incorrect_words, correct_words)
+    }
 
 
 @app.post("/sentence_level", tags=["LLM"],
