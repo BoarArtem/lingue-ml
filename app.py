@@ -44,7 +44,7 @@ import json
 import time
 from datetime import datetime, timezone
 
-print("ALL IMPORTS FINISHED")
+logging.info("ALL IMPORTS FINISHED")
 
 
 # nltk.download('punkt')
