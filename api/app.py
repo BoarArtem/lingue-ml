@@ -5,7 +5,6 @@ import asyncio
 import pandas as pd
 from fastapi import FastAPI, HTTPException
 from fastapi import Request
-from fastapi.responses import JSONResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
@@ -13,14 +12,12 @@ from slowapi.errors import RateLimitExceeded
 from pydantic import BaseModel, Field
 from gensim.models import Word2Vec
 import os
-import nltk
 import uuid
-import traceback
 from inference.topic_predictor import TopicPredictor
-from models.b2_predictor import B2PredictorModel
-from models.llm_sentence_generate import llm_sentence_generate
-from models.llm_word_level import llm_word_level
-from models.llm_correct_paragraph import correct_paragraph, get_changed_word, word_pair
+from models.ml.b2_predictor import B2PredictorModel
+from models.llm.llm_sentence_generate import llm_sentence_generate
+from models.llm.llm_word_level import llm_word_level
+from models.llm.llm_correct_paragraph import correct_paragraph, get_changed_word, word_pair
 
 from data.tokenizer import (
     sentence_preprocess_english,
@@ -31,7 +28,7 @@ from data.tokenizer import (
     sentence_preprocess_chinese
 )
 
-from models.spam_classification_model import SpamClassificationModel
+from models.ml.spam_classification_model import SpamClassificationModel
 import logging
 import logging.handlers
 import json
