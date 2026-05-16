@@ -14,7 +14,7 @@ import pymorphy3
 from razdel import tokenize
 import spacy
 import jieba
-from data.preprocess import spam_classification_preprocess
+from data.preprocess.preprocess import spam_classification_preprocess
 
 CACHE_PATH = "tokens_cache.pkl"
 

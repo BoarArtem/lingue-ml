@@ -1,7 +1,7 @@
 import os
 import joblib
 import pandas as pd
-from models.b2_predictor import B2PredictorModel
+from models.ml.b2_predictor import B2PredictorModel
 
 MODEL_PATH = os.path.join(
     os.path.dirname(__file__),

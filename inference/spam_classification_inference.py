@@ -1,7 +1,7 @@
 import os
 import torch
-from models.spam_classification_model import SpamClassificationModel
-from data.spam_classification.dataset import vocab
+from models.ml.spam_classification_model import SpamClassificationModel
+from datasets.spam_dataset_executor import vocab
 
 model_dir = os.getenv("MODEL_DIR", "/models")  # for docker testing/production
 
