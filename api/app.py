@@ -29,6 +29,7 @@ from data.tokenizer import (
 )
 
 from models.ml.spam_classification_model import SpamClassificationModel
+from inference.anti_plagiarism_model_inference import AntiPlagiarismModelInference
 import logging
 import logging.handlers
 import json
@@ -173,6 +174,13 @@ except FileNotFoundError:
     predictor = B2PredictorModel()
     logger.warning("B2PredictorModel not found on disk — using untrained instance")
 
+try:
+    anti_plagiarism = AntiPlagiarismModelInference()
+    logger.info("AntiPlagiarismModelInference loaded successfully")
+except Exception:
+    logger.error("Failed to load AntiPlagiarismModelInference", exc_info=True)
+    anti_plagiarism = None
+
 
 class TopicRequest(BaseModel):
     sentences: list[str] = Field(..., example=["I love coding in Python"])
@@ -221,6 +229,7 @@ class SentenceContextRate(BaseModel):
 
 class CheckPlagiarism(BaseModel):
     user_text: str = Field(example="bla bla bla bla bla bla bla bla")
+    get_index: bool = Field(default=False)
 
 
 @app.on_event("startup")
@@ -593,9 +602,31 @@ def sentence_context_rate(request: Request, req: SentenceContextRate):
 
 @app.post("/check_plagiarism", tags=["Machine Learning"],
           summary="Проверка текста на AI-плагиат")
+@limiter.limit("10/minute")
 def check_plagiarism(request: Request, req: CheckPlagiarism):
-    logger.warning(
-        "check_plagiarism called but not implemented",
-        extra={"request_id": getattr(request.state, "request_id", "-")}
-    )
-    raise HTTPException(status_code=501, detail="Not implemented")
+
+    if req.user_text is None:
+        logger.warning("user_text is required")
+        raise HTTPException(status_code=400, detail="user_text is required")
+
+    if anti_plagiarism is None:
+        logger.error("Anti-plagiarism model is not initialized")
+        raise HTTPException(status_code=500, detail="Anti-plagiarism model is not initialized")
+
+    try:
+        label = anti_plagiarism.get_label(req.user_text)
+    except Exception as e:
+        logger.error("Error in check_plagiarism", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error in check_plagiarism: {e}")
+
+    if req.get_index:
+        try:
+            label = anti_plagiarism.get_index_from_label(label)
+        except Exception as e:
+            logger.error("Error in get_index_from_label", exc_info=True)
+            raise HTTPException(status_code=500, detail=f"Error in get_index_from_label: {e}")
+
+    logger.info(f"Plagiarism check result: {label}")
+
+    # ВСЁ РАДИ ТЕБЯ!!!!!! ДЕЛАЮ ТВОЮ РАБОТУ!!!!!! Я РАБ ЭТОЙ СИСТЕМЫ!!!!!!
+    return {"label": label}
