@@ -1,4 +1,4 @@
-from models.anti_plagiarism import get_plagiarism_score, convert_text_to_label
+from models.ml.anti_plagiarism import get_plagiarism_score, convert_text_to_label
 
 class AntiPlagiarismModelInference:
     def get_label(self, text):

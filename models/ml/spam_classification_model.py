@@ -2,8 +2,6 @@ import torch
 import torch.optim
 
 from torch import nn
-from datasets.spam_dataset_executor import loader
-
 # model class
 class SpamClassificationModel(nn.Module):
     def __init__(self, vocab_size, embed_dim, hidden_size, num_layers, dropout=0.3):
@@ -40,6 +38,8 @@ criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
 def train(epochs):
+    from datasets.spam_dataset_executor import loader
+
     model.train()
 
     for epoch in range(epochs):
