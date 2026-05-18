@@ -78,7 +78,7 @@ def predict(
     if not b2.feature_names:
         raise HTTPException(400, "Модель не обучена")
 
-    df = pd.DataFrame([req.features])
+    df = pd.DataFrame([req.features.model_dump()])
     missing = [c for c in b2.feature_names if c not in df.columns]
     if missing:
         raise HTTPException(400, f"Отсутствуют колонки: {missing}")

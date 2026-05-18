@@ -1,7 +1,9 @@
 from pydantic_settings import BaseSettings # добавить
 
+import os
+
 class Settings(BaseSettings):
-    model_dir: str = "/models"
+    model_dir: str = os.getenv("MODEL_DIR", "storage/models")
 
     # app version
     APP_VERSION: str = "v2.11.5"

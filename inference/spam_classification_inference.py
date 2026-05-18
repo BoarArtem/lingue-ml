@@ -3,7 +3,7 @@ import torch
 from models.ml.spam_classification_model import SpamClassificationModel
 from datasets.spam_dataset_executor import vocab
 
-model_dir = os.getenv("MODEL_DIR", "/models")  # for docker testing/production
+model_dir = os.getenv("MODEL_DIR", "storage/models")  # for docker testing/production
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = SpamClassificationModel(
