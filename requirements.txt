@@ -9,6 +9,8 @@ scikit-learn
 
 pydantic_settings
 
+locust
+
 slowapi
 
 gensim==4.4.0
