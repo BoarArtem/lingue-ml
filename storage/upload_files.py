@@ -21,8 +21,7 @@ config = TransferConfig(
 )
 
 files_to_upload = [
-    "../data/tokens_cache.pkl",
-    "../data/datasets/spam_Emails_data.csv"
+    "../inference/b2_model.pkl",
 ]
 
 for file in files_to_upload:

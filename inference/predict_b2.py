@@ -5,8 +5,9 @@ from sklearn.model_selection import train_test_split
 
 from models.ml.b2_predictor import B2PredictorModel
 
+MODEL_DIR = os.getenv("MODEL_DIR", "storage/models")
 
-MODEL_PATH = "b2_model.pkl"
+MODEL_PATH = os.path.join(MODEL_DIR, "b2_model.pkl")
 
 
 def train_model(data_path: str):

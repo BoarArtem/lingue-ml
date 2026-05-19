@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-MODEL_DIR = os.getenv("MODEL_DIR", "/models")
+MODEL_DIR = os.getenv("MODEL_DIR", os.path.join(os.path.dirname(__file__), "models"))
 os.makedirs(MODEL_DIR, exist_ok=True)
 
 s3 = boto3.client(

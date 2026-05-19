@@ -8,7 +8,7 @@ from torch.utils.data import Dataset, DataLoader
 
 from data.preprocess import spam_classification_preprocess
 
-model_dir = os.getenv("MODEL_DIR", "/models")  # for docker testing/production
+model_dir = os.getenv("MODEL_DIR", "storage/models")  # for docker testing/production
 
 data = spam_classification_preprocess(f"{model_dir}/spam_Emails_data.csv")
 # data = spam_classification_preprocess("datasets/spam_Emails_data.csv") # local testing
