@@ -1,4 +1,4 @@
-from models.tacotron2 import *
+from models.voice.tacotron2 import *
 from data.tts.fleurs.fleurs_dataset_executor import extract_dict_of_loaders
 
 loss_fn = get_tacotron2_loss()
