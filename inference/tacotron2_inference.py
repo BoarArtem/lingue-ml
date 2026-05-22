@@ -50,5 +50,5 @@ if __name__ == "__main__":
     import scipy.io.wavfile as wav
     audio = tts("You look so pretty")
     audio_np = audio.cpu().numpy().astype(np.float32)
-    wav.write("output.wav", 22050, audio_np)
+    wav.write("testing.wav", 22050, audio_np)
     print("Saved output.wav")
