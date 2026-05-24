@@ -14,12 +14,9 @@ def health(request: Request):
     ml = request.app.state.ml
 
     models_status = {
-        "word2vec":        ml.word2vec is not None,
-        "spam":            ml.spam is not None,
-        "b2":              ml.b2 is not None,
-        "topic":           ml.topic is not None,
-        "anti_plagiarism": ml.anti_plagiarism is not None,
-        "tts":             ml.tts is not None,
+        "word2vec": ml.word2vec is not None,
+        "b2":       ml.b2 is not None,
+        "tts":      ml.tts is not None,
     }
 
     all_ok = all(models_status.values())

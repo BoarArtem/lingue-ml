@@ -20,38 +20,10 @@ def get_word2vec(request: Request):
     return model
 
 
-def get_spam_model(request: Request):
-    model = request.app.state.ml.spam
-    if model is None:
-        raise HTTPException(500, "Spam model not loaded")
-    return model
-
-
-def get_spam_vocab(request: Request) -> dict:
-    vocab = request.app.state.ml.spam_vocab
-    if vocab is None:
-        raise HTTPException(500, "Spam vocab not loaded")
-    return vocab
-
-
 def get_b2_model(request: Request):
     model = request.app.state.ml.b2
     if model is None:
         raise HTTPException(500, "B2 model not loaded")
-    return model
-
-
-def get_topic_predictor(request: Request):
-    model = request.app.state.ml.topic
-    if model is None:
-        raise HTTPException(500, "Topic predictor not loaded")
-    return model
-
-
-def get_anti_plagiarism(request: Request):
-    model = request.app.state.ml.anti_plagiarism
-    if model is None:
-        raise HTTPException(500, "Anti-plagiarism model not loaded")
     return model
 
 

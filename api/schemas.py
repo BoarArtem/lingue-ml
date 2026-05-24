@@ -14,16 +14,6 @@ class SimilarResponse(BaseModel):
     results: list[SimilarItem]
 
 
-class SpamClassificationRequest(BaseModel):
-    user_sentence: str = Field(example="buy cheap drugs now")
-
-class SpamClassificationResponse(BaseModel):
-    label: str = Field(example="ham", description="spam | ham")
-
-
-from pydantic import BaseModel, Field
-
-
 class Features(BaseModel):
     unique_words: int = Field(
         example=1500,
@@ -97,28 +87,6 @@ class PredictResponse(BaseModel):
     )
 
 
-class SingleTopicRequest(BaseModel):
-    sentence: str = Field(example="I love coding in Python")
-
-class TopicResponse(BaseModel):
-    topic: str = Field(example="Technology")
-
-
-class TopicRequest(BaseModel):
-    sentences: list[str] = Field(example=["I love coding", "I like football"])
-
-class TopicsResponse(BaseModel):
-    topics: list[str] = Field(example=["Technology", "Sport"])
-
-
-class CheckPlagiarismRequest(BaseModel):
-    user_text: str = Field(example="The quick brown fox jumps over the lazy dog")
-    get_index: bool = Field(default=False, description="Вернуть числовой индекс вместо строки")
-
-class CheckPlagiarismResponse(BaseModel):
-    label: str | int = Field(example="human", description="human | ai или 0 | 1 если get_index=True")
-
-
 class WordLevelRequest(BaseModel):
     word: str = Field(example="nevertheless")
     translation: str = Field(example="тем не менее")
@@ -136,19 +104,6 @@ class SentenceResponse(BaseModel):
     sentence: str = Field(example="The dog is big.")
 
 
-class CorrectParagraphRequest(BaseModel):
-    user_sentence: str = Field(example="I eated pizza yesterday")
-
-class WordChange(BaseModel):
-    incorrect: str = Field(example="eated")
-    correct: str = Field(example="ate")
-
-class CorrectParagraphResponse(BaseModel):
-    user_sentence: str = Field(example="I eated pizza yesterday")
-    ai_sentence: str = Field(example="I ate pizza yesterday")
-    changes: list[WordChange]
-
-
 class PreprocessRequest(BaseModel):
     sentence: str = Field(example="Dogs are running in the park")
     language: str = Field(example="en", description="en | ru | es | fr | de | ch")
@@ -159,7 +114,7 @@ class PreprocessResponse(BaseModel):
 
 class TTSRequest(BaseModel):
     text: str = Field(example="Hello, this is a test.")
-    ref_audio_path: str = Field(example="/app/inference/ref.wav", description="Server-side path to reference WAV file")
+    ref_audio_path: str = Field(example="/inference/ref.wav", description="Server-side path to reference WAV file")
     ref_text: str = Field(example="Transcription of the reference audio.")
     language: str | None = Field(default=None, example="en")
     n_fft: int = Field(default=1024, description="FFT size for mel spectrogram")
@@ -183,10 +138,7 @@ class TTSMelResponse(BaseModel):
 
 class ModelsStatus(BaseModel):
     word2vec: bool
-    spam: bool
     b2: bool
-    topic: bool
-    anti_plagiarism: bool
     tts: bool
 
 class HealthResponse(BaseModel):

@@ -1,4 +1,3 @@
-import asyncio
 import time
 
 from fastapi import APIRouter, Request, HTTPException
@@ -9,9 +8,9 @@ from ..logger import build_logger
 from ..schemas import (
     WordLevelRequest, WordLevelResponse,
     SentenceRequest, SentenceResponse,
-    CorrectParagraphRequest, CorrectParagraphResponse, WordChange,
 )
-from models import llm_word_level, llm_sentence_generate, correct_paragraph, get_changed_word, word_pair
+from models.llm_word_level import llm_word_level
+from models.llm_sentence_generate import llm_sentence_generate
 
 router = APIRouter(tags=["LLM"])
 limiter = Limiter(key_func=get_remote_address)
@@ -85,56 +84,3 @@ def sentence(request: Request, req: SentenceRequest):
     return SentenceResponse(sentence=result)
 
 
-@router.post(
-    "/correct_paragraph",
-    summary="Исправление ошибок в предложении",
-    response_model=CorrectParagraphResponse,
-)
-@limiter.limit("10/minute")
-async def correct_paragraph_checking(request: Request, req: CorrectParagraphRequest):
-    rid = getattr(request.state, "request_id", "-")
-
-    logger.info(
-        f"Correct paragraph: chars={len(req.user_sentence)}",
-        extra={"request_id": rid}
-    )
-    t0 = time.perf_counter()
-
-    try:
-        ai_sentence = await asyncio.to_thread(correct_paragraph, req.user_sentence)
-    except Exception:
-        logger.error(
-            "Correct paragraph LLM call failed",
-            exc_info=True,
-            extra={"request_id": rid}
-        )
-        raise HTTPException(status_code=500, detail="LLM error")
-
-    try:
-        incorrect, correct = await asyncio.to_thread(
-            get_changed_word, req.user_sentence, ai_sentence
-        )
-    except Exception:
-        logger.error(
-            "get_changed_word failed",
-            exc_info=True,
-            extra={"request_id": rid}
-        )
-        raise HTTPException(status_code=500, detail="Diff error")
-
-    changes = [
-        WordChange(incorrect=inc, correct=cor)
-        for inc, cor in word_pair(incorrect, correct)
-    ]
-
-    ms = round((time.perf_counter() - t0) * 1000, 1)
-    logger.info(
-        f"Correct paragraph done: changes={len(changes)}, took={ms}ms",
-        extra={"request_id": rid, "duration_ms": ms}
-    )
-
-    return CorrectParagraphResponse(
-        user_sentence=req.user_sentence,
-        ai_sentence=ai_sentence,
-        changes=changes,
-    )
