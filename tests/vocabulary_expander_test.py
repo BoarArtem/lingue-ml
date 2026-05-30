@@ -1,5 +1,5 @@
 from unittest.mock import MagicMock
-from models.vocabulary_expander import VocabularyExpander
+from models.llm.vocabulary_expander import VocabularyExpander
 
 
 def test_vocabulary_expander_returns():

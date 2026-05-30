@@ -6,6 +6,9 @@ __pycache__
 
 .git
 .gitignore
+.github
+.vscode
+/tests/*
 
 ml-assets
 datasets
@@ -18,6 +21,9 @@ inference/*.kv.vectors.npy
 /inference/word2vec.model.syn1neg.npy
 /inference/spam_classification_model.pth
 /data/datasets/english_corpus.txt
+/data-previous/datasets/spam_Emails_data.csv
+/data-previous/tokens_cache.pkl
+/data/raw/english_corpus.txt
 
 
 .DS_Store

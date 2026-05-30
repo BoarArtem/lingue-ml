@@ -14,6 +14,13 @@ class SimilarResponse(BaseModel):
     results: list[SimilarItem]
 
 
+class SpamClassificationRequest(BaseModel):
+    user_sentence: str = Field(example="buy cheap drugs now")
+
+class SpamClassificationResponse(BaseModel):
+    label: str = Field(example="ham", description="spam | ham")
+
+
 class Features(BaseModel):
     unique_words: int = Field(
         example=1500,
@@ -87,6 +94,28 @@ class PredictResponse(BaseModel):
     )
 
 
+class SingleTopicRequest(BaseModel):
+    sentence: str = Field(example="I love coding in Python")
+
+class TopicResponse(BaseModel):
+    topic: str = Field(example="Technology")
+
+
+class TopicRequest(BaseModel):
+    sentences: list[str] = Field(example=["I love coding", "I like football"])
+
+class TopicsResponse(BaseModel):
+    topics: list[str] = Field(example=["Technology", "Sport"])
+
+
+class CheckPlagiarismRequest(BaseModel):
+    user_text: str = Field(example="The quick brown fox jumps over the lazy dog")
+    get_index: bool = Field(default=False, description="Вернуть числовой индекс вместо строки")
+
+class CheckPlagiarismResponse(BaseModel):
+    label: str | int = Field(example="human", description="human | ai или 0 | 1 если get_index=True")
+
+
 class WordLevelRequest(BaseModel):
     word: str = Field(example="nevertheless")
     translation: str = Field(example="тем не менее")
@@ -102,6 +131,19 @@ class SentenceRequest(BaseModel):
 
 class SentenceResponse(BaseModel):
     sentence: str = Field(example="The dog is big.")
+
+
+class CorrectParagraphRequest(BaseModel):
+    user_sentence: str = Field(example="I eated pizza yesterday")
+
+class WordChange(BaseModel):
+    incorrect: str = Field(example="eated")
+    correct: str = Field(example="ate")
+
+class CorrectParagraphResponse(BaseModel):
+    user_sentence: str = Field(example="I eated pizza yesterday")
+    ai_sentence: str = Field(example="I ate pizza yesterday")
+    changes: list[WordChange]
 
 
 class PreprocessRequest(BaseModel):
@@ -144,7 +186,10 @@ class TTSMelResponse(BaseModel):
 
 class ModelsStatus(BaseModel):
     word2vec: bool
+    spam: bool
     b2: bool
+    topic: bool
+    anti_plagiarism: bool
     tts: bool
 
 class HealthResponse(BaseModel):

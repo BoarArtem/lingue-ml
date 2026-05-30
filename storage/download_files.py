@@ -1,7 +1,10 @@
 import boto3
 import os
+from dotenv import load_dotenv
 
-MODEL_DIR = os.getenv("MODEL_DIR", "/models")
+load_dotenv()
+
+MODEL_DIR = os.getenv("MODEL_DIR", os.path.join(os.path.dirname(__file__), "models"))
 os.makedirs(MODEL_DIR, exist_ok=True)
 
 s3 = boto3.client(
@@ -12,9 +15,15 @@ s3 = boto3.client(
 )
 
 files = [
+    "b2_model.pkl",
+    "spam_classification_model_60.pth",
+    "topic_model.pkl",
+    "topic_vectorizer.pkl",
     "word2vec.model",
     "word2vec.model.syn1neg.npy",
-    "word2vec.model.wv.vectors.npy"
+    "word2vec.model.wv.vectors.npy",
+    "tokens_cache.pkl",
+    "spam_Emails_data.csv",
 ]
 
 
