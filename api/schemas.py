@@ -115,9 +115,9 @@ class PreprocessResponse(BaseModel):
 class TTSRequest(BaseModel):
     text: str = Field(example="Hello, this is a test.")
     language: str | None = Field(default=None, example="en")
-    n_fft: int = Field(default=1024, description="FFT size for mel spectrogram")
-    hop_length: int = Field(default=256, description="Hop length for mel spectrogram")
-    n_mels: int = Field(default=80, description="Number of mel filterbanks")
+    n_fft: int = Field(default=1024, description="Размер FFT для мел-спектрограммы")
+    hop_length: int = Field(default=256, description="Шаг окна (hop length) для мел-спектрограммы")
+    n_mels: int = Field(default=80, description="Количество мел-фильтров")
 
 
 class TTSSpeechResponse(BaseModel):
@@ -126,16 +126,16 @@ class TTSSpeechResponse(BaseModel):
 
 
 class MelToSpeechRequest(BaseModel):
-    shape: list[int] = Field(example=[80, 173], description="[n_mels, time_steps] of the mel array")
-    data: str = Field(description="Base64-encoded float32 mel array (row-major, matching shape)")
-    n_fft: int = Field(default=1024, description="Must match the n_fft used to create the mel")
-    hop_length: int = Field(default=256, description="Must match the hop_length used to create the mel")
-    n_iter: int = Field(default=32, description="Griffin-Lim iterations — higher is slower but cleaner")
+    shape: list[int] = Field(example=[80, 173], description="[n_mels, кол-во временных шагов] массива мел-спектрограммы")
+    data: str = Field(description="Массив мел-спектрограммы float32 в Base64 (по строкам, в соответствии с shape)")
+    n_fft: int = Field(default=1024, description="Должен совпадать с n_fft, использованным при создании мел-спектрограммы")
+    hop_length: int = Field(default=256, description="Должен совпадать с hop_length, использованным при создании мел-спектрограммы")
+    n_iter: int = Field(default=32, description="Количество итераций Griffin-Lim — больше итераций медленнее, но чище звук")
 
 
 class TTSMelResponse(BaseModel):
-    shape: list[int] = Field(example=[80, 383], description="[n_mels, time_steps]")
-    data: str = Field(description="Base64-encoded float32 numpy array, reshape using shape")
+    shape: list[int] = Field(example=[80, 383], description="[n_mels, кол-во временных шагов]")
+    data: str = Field(description="Массив numpy float32 в Base64, восстанавливается через reshape по shape")
     sample_rate: int = Field(example=24000)
     n_mels: int = Field(example=80)
     n_fft: int = Field(example=1024)
