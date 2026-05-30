@@ -114,8 +114,6 @@ class PreprocessResponse(BaseModel):
 
 class TTSRequest(BaseModel):
     text: str = Field(example="Hello, this is a test.")
-    ref_audio_path: str = Field(example="/inference/ref.wav", description="Server-side path to reference WAV file")
-    ref_text: str = Field(example="Transcription of the reference audio.")
     language: str | None = Field(default=None, example="en")
     n_fft: int = Field(default=1024, description="FFT size for mel spectrogram")
     hop_length: int = Field(default=256, description="Hop length for mel spectrogram")
@@ -125,6 +123,14 @@ class TTSRequest(BaseModel):
 class TTSSpeechResponse(BaseModel):
     sample_rate: int = Field(example=24000)
     duration_sec: float = Field(example=3.5)
+
+
+class MelToSpeechRequest(BaseModel):
+    shape: list[int] = Field(example=[80, 173], description="[n_mels, time_steps] of the mel array")
+    data: str = Field(description="Base64-encoded float32 mel array (row-major, matching shape)")
+    n_fft: int = Field(default=1024, description="Must match the n_fft used to create the mel")
+    hop_length: int = Field(default=256, description="Must match the hop_length used to create the mel")
+    n_iter: int = Field(default=32, description="Griffin-Lim iterations — higher is slower but cleaner")
 
 
 class TTSMelResponse(BaseModel):

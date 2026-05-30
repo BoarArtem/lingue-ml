@@ -40,6 +40,37 @@ class OmniVoiceInference:
         mel = transform(waveform)
         return mel.squeeze(0).numpy()
 
+    def mel_to_audio(
+        self,
+        mel: np.ndarray,
+        n_fft: int = 1024,
+        hop_length: int = 256,
+        n_iter: int = 32,
+    ) -> np.ndarray:
+        """Reconstruct a waveform from a power mel-spectrogram via Griffin-Lim.
+
+        Inverts the same transform produced by ``mel_spectrogram`` (an un-logged
+        power spectrogram). Quality is approximate — Griffin-Lim has no learned
+        phase — but needs no extra model.
+        """
+        mel_t = torch.from_numpy(np.ascontiguousarray(mel)).float()
+        n_mels = mel_t.shape[0]
+
+        inverse_mel = torchaudio.transforms.InverseMelScale(
+            n_stft=n_fft // 2 + 1,
+            n_mels=n_mels,
+            sample_rate=self.sample_rate,
+        )
+        spectrogram = inverse_mel(mel_t)
+
+        griffin_lim = torchaudio.transforms.GriffinLim(
+            n_fft=n_fft,
+            hop_length=hop_length,
+            n_iter=n_iter,
+        )
+        waveform = griffin_lim(spectrogram)
+        return waveform.numpy()
+
     def generate_mel(
         self,
         text: str,

@@ -1,5 +1,6 @@
 import io
 import base64
+from pathlib import Path
 import numpy as np
 import soundfile as sf
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -9,11 +10,15 @@ from slowapi.util import get_remote_address
 
 from ..dependencies import get_tts
 from ..logger import build_logger
-from ..schemas import TTSRequest, TTSMelResponse
+from ..schemas import TTSRequest, TTSMelResponse, MelToSpeechRequest
 
 router = APIRouter(prefix="/tts", tags=["TTS"])
 limiter = Limiter(key_func=get_remote_address)
 logger = build_logger("ml_linguo")
+
+# Fixed reference voice used for all TTS requests.
+REF_AUDIO_PATH = str(Path(__file__).resolve().parents[2] / "inference" / "ref.wav")
+REF_TEXT = "Існують, звичайно, християнські теологічні пояснення цієї традиції, але це цілком може бути дохристиянський ритуал весни та родючості."
 
 
 @router.post("/speech", summary="Синтез речи — возвращает WAV аудио")
@@ -25,8 +30,8 @@ def tts_speech(request: Request, req: TTSRequest, tts=Depends(get_tts)):
     try:
         audio = tts.generate(
             text=req.text,
-            ref_audio=req.ref_audio_path,
-            ref_text=req.ref_text,
+            ref_audio=REF_AUDIO_PATH,
+            ref_text=REF_TEXT,
             **({} if req.language is None else {"language": req.language}),
         )
     except Exception:
@@ -51,8 +56,8 @@ def tts_mel(request: Request, req: TTSRequest, tts=Depends(get_tts)):
     try:
         audio = tts.generate(
             text=req.text,
-            ref_audio=req.ref_audio_path,
-            ref_text=req.ref_text,
+            ref_audio=REF_AUDIO_PATH,
+            ref_text=REF_TEXT,
             **({} if req.language is None else {"language": req.language}),
         )
         mel = tts.mel_spectrogram(
@@ -76,3 +81,30 @@ def tts_mel(request: Request, req: TTSRequest, tts=Depends(get_tts)):
         n_fft=req.n_fft,
         hop_length=req.hop_length,
     )
+
+
+@router.post("/mel/speech", summary="Восстановление аудио из мел-спектрограммы — возвращает WAV")
+@limiter.limit("5/minute")
+def tts_mel_to_speech(request: Request, req: MelToSpeechRequest, tts=Depends(get_tts)):
+    rid = getattr(request.state, "request_id", "-")
+    logger.info(f"TTS mel->speech: shape={req.shape}", extra={"request_id": rid})
+
+    try:
+        mel = np.frombuffer(base64.b64decode(req.data), dtype=np.float32).reshape(req.shape)
+        audio = tts.mel_to_audio(
+            mel,
+            n_fft=req.n_fft,
+            hop_length=req.hop_length,
+            n_iter=req.n_iter,
+        )
+    except Exception:
+        logger.error("TTS mel->speech failed", exc_info=True, extra={"request_id": rid})
+        raise HTTPException(500, "TTS mel->speech failed")
+
+    buf = io.BytesIO()
+    sf.write(buf, audio, samplerate=tts.sample_rate, format="wav")
+    buf.seek(0)
+
+    logger.info(f"TTS mel->speech done: duration={len(audio)/tts.sample_rate:.2f}s",
+                extra={"request_id": rid})
+    return StreamingResponse(buf, media_type="audio/wav")
