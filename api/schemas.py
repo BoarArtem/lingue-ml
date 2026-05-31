@@ -21,9 +21,6 @@ class SpamClassificationResponse(BaseModel):
     label: str = Field(example="ham", description="spam | ham")
 
 
-from pydantic import BaseModel, Field
-
-
 class Features(BaseModel):
     unique_words: int = Field(
         example=1500,
@@ -157,12 +154,43 @@ class PreprocessResponse(BaseModel):
     tokens: list[str] = Field(example=["dog", "run", "park"])
 
 
+class TTSRequest(BaseModel):
+    text: str = Field(example="Hello, this is a test.")
+    language: str | None = Field(default=None, example="en")
+    n_fft: int = Field(default=1024, description="Размер FFT для мел-спектрограммы")
+    hop_length: int = Field(default=256, description="Шаг окна (hop length) для мел-спектрограммы")
+    n_mels: int = Field(default=80, description="Количество мел-фильтров")
+
+
+class TTSSpeechResponse(BaseModel):
+    sample_rate: int = Field(example=24000)
+    duration_sec: float = Field(example=3.5)
+
+
+class MelToSpeechRequest(BaseModel):
+    shape: list[int] = Field(example=[80, 173], description="[n_mels, кол-во временных шагов] массива мел-спектрограммы")
+    data: str = Field(description="Массив мел-спектрограммы float32 в Base64 (по строкам, в соответствии с shape)")
+    n_fft: int = Field(default=1024, description="Должен совпадать с n_fft, использованным при создании мел-спектрограммы")
+    hop_length: int = Field(default=256, description="Должен совпадать с hop_length, использованным при создании мел-спектрограммы")
+    n_iter: int = Field(default=32, description="Количество итераций Griffin-Lim — больше итераций медленнее, но чище звук")
+
+
+class TTSMelResponse(BaseModel):
+    shape: list[int] = Field(example=[80, 383], description="[n_mels, кол-во временных шагов]")
+    data: str = Field(description="Массив numpy float32 в Base64, восстанавливается через reshape по shape")
+    sample_rate: int = Field(example=24000)
+    n_mels: int = Field(example=80)
+    n_fft: int = Field(example=1024)
+    hop_length: int = Field(example=256)
+
+
 class ModelsStatus(BaseModel):
     word2vec: bool
     spam: bool
     b2: bool
     topic: bool
     anti_plagiarism: bool
+    tts: bool
 
 class HealthResponse(BaseModel):
     status: str = Field(example="ok", description="ok | degraded")

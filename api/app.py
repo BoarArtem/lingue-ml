@@ -10,7 +10,7 @@ from slowapi.util import get_remote_address
 from api.config import settings
 from api.state import load_models
 from api.logger import build_logger
-from api.routers import nlp, ml, llm, system
+from api.routers import nlp, ml, llm, system, tts
 
 APP_VERSION = "v2.11.5"
 
@@ -48,3 +48,4 @@ app.include_router(system.router)
 app.include_router(nlp.router)
 app.include_router(ml.router)
 app.include_router(llm.router)
+app.include_router(tts.router)
