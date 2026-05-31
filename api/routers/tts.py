@@ -22,7 +22,7 @@ REF_TEXT = "Існують, звичайно, християнські теол�
 
 
 @router.post("/speech", summary="Синтез речи — возвращает WAV аудио")
-@limiter.limit("5/minute")
+@limiter.limit("15/minute")
 def tts_speech(request: Request, req: TTSRequest, tts=Depends(get_tts)):
     rid = getattr(request.state, "request_id", "-")
     logger.info(f"TTS speech: chars={len(req.text)}", extra={"request_id": rid})
@@ -48,7 +48,7 @@ def tts_speech(request: Request, req: TTSRequest, tts=Depends(get_tts)):
 
 
 @router.post("/mel", summary="Синтез речи — возвращает мел-спектрограмму", response_model=TTSMelResponse)
-@limiter.limit("5/minute")
+@limiter.limit("15/minute")
 def tts_mel(request: Request, req: TTSRequest, tts=Depends(get_tts)):
     rid = getattr(request.state, "request_id", "-")
     logger.info(f"TTS mel: chars={len(req.text)}", extra={"request_id": rid})
@@ -84,7 +84,7 @@ def tts_mel(request: Request, req: TTSRequest, tts=Depends(get_tts)):
 
 
 @router.post("/mel/speech", summary="Восстановление аудио из мел-спектрограммы — возвращает WAV")
-@limiter.limit("5/minute")
+@limiter.limit("15/minute")
 def tts_mel_to_speech(request: Request, req: MelToSpeechRequest, tts=Depends(get_tts)):
     rid = getattr(request.state, "request_id", "-")
     logger.info(f"TTS mel->speech: shape={req.shape}", extra={"request_id": rid})
