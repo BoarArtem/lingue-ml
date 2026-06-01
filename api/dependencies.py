@@ -53,3 +53,10 @@ def get_anti_plagiarism(request: Request):
     if model is None:
         raise HTTPException(500, "Anti-plagiarism model not loaded")
     return model
+
+
+def get_tts(request: Request):
+    model = request.app.state.ml.tts
+    if model is None:
+        raise HTTPException(500, "TTS model not loaded")
+    return model

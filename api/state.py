@@ -9,6 +9,7 @@ from models.ml.spam_classification_model import SpamClassificationModel
 from models.ml.b2_predictor import B2PredictorModel
 from inference.topic_predictor import TopicPredictor
 from inference.anti_plagiarism_model_inference import AntiPlagiarismModelInference
+from inference.omnivoice_tts_inference import OmniVoiceInference
 from datasets.spam_dataset_executor import vocab as spam_vocab_data
 
 logger = build_logger("ml_linguo")
@@ -23,6 +24,7 @@ class AppState:
     b2: B2PredictorModel | None = None
     topic: TopicPredictor | None = None
     anti_plagiarism: AntiPlagiarismModelInference | None = None
+    tts: OmniVoiceInference | None = None
 
 
 def load_models(model_dir: str, device: torch.device) -> AppState:
@@ -82,5 +84,14 @@ def load_models(model_dir: str, device: torch.device) -> AppState:
         logger.info("AntiPlagiarism loaded")
     except Exception:
         logger.error("AntiPlagiarism load failed", exc_info=True)
+
+    try:
+        state.tts = OmniVoiceInference(
+            device="cuda" if torch.cuda.is_available() else "cpu",
+            dtype=torch.float32,
+        )
+        logger.info("OmniVoiceTTS loaded")
+    except Exception:
+        logger.error("OmniVoiceTTS load failed", exc_info=True)
 
     return state

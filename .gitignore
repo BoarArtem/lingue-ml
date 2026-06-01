@@ -1,25 +1,40 @@
 .venv/
+venv/
 .vscode/
 .idea/
 __pycache__/
 .pytest_cache/
 *.pyc
 .env
+.DS_Store
+Thumbs.db
+*.log
+*.pth
+
+# data
 data/*.pkl
 data/*.bin
+data/ljspeech/
+data/tts/LJSpeech-1.1/
+data/tts/fleurs/de_de/
+data/tts/fleurs/en_us/
+data/raw/
+data/preprocess/
+data/tokenizer/
+/data/raw/english_corpus.txt
+/data-previous/datasets/spam_Emails_data.csv
+
+# inference artifacts
 /inference/*.kv
 /inference/*.vec
 /inference/*.kv.vectors.npy
-/inference/word2vec.model.wv.vectors.npy
-/data/raw/english_corpus.txt
 /inference/word2vec.model
+/inference/word2vec.model.wv.vectors.npy
 /inference/word2vec.model.syn1neg.npy
-/data-previous/datasets/spam_Emails_data.csv
-/models-previous/tacotron2.py
-/models/llm/llm_correct_paragraph.py
 #/inference/spam_classification_model.pth
-/data/ljspeech/LJSpeech-1.1/wavs/*.wav
-*.pth
-data/
-data/raw/
-data/raw/english_corpus.txt
+
+# storage
+storage/models/
+
+# misc
+/models-previous/tacotron2.py
