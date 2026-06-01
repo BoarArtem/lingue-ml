@@ -3,10 +3,11 @@ import joblib
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-from models.b2_predictor import B2PredictorModel
+from models.ml.b2_predictor import B2PredictorModel
 
+MODEL_DIR = os.getenv("MODEL_DIR", "storage/models")
 
-MODEL_PATH = "b2_model.pkl"
+MODEL_PATH = os.path.join(MODEL_DIR, "b2_model.pkl")
 
 
 def train_model(data_path: str):
@@ -44,7 +45,7 @@ def predict_days(user_data: dict) -> int:
 
 if __name__ == "__main__":
 
-    train_model("../data/datasets/dataset_b2.csv")
+    train_model("../data/raw/dataset_b2.csv")
 
     test_user = {
         'unique_words': 1500,
