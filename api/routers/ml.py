@@ -36,6 +36,23 @@ def spam_classification(
     spam_vocab=Depends(get_spam_vocab),
     device=Depends(get_device),
 ):
+    """
+    Модель которая классифицирует на спам ОДНУ карточку
+
+    Limits:
+        Не более 30 запросов в минуту с одного IP
+
+    Args:
+        req (SpamClassificationRequest):
+            - user_sentence (str): Предложение пользователя
+
+    Returns:
+        Возвращает класс: spam | ham, где spam - спам, ham - нормалдасик
+
+    Raises:
+        500: Spam classification error
+        422: Validation Error
+    """
     rid = getattr(request.state, "request_id", "-")
     logger.info(f"Spam classification: chars={len(req.user_sentence)}",
                 extra={"request_id": rid})
@@ -54,6 +71,24 @@ def spam_classification(
 @router.post("/similar", response_model=SimilarResponse)
 @limiter.limit("30/minute")
 def similar(request: Request, req: SimilarRequest, wv=Depends(get_word2vec)):
+    """
+    Модель которая из списка слов, представляет слова которые могут быть похожие по смыслу
+
+    Limits:
+        Не более 30 запросов в минуту с одного IP
+
+    Args:
+        req (SimilarRequest):
+            - arr (list[str]): Список слов пользователя
+            - topn (int): Количество похожих слов которая выдаст модель
+
+    Returns:
+        Возвращает массив диктов в котором каждый дикт состоит из похожего слова и процентом схожести(score)
+
+    Raises:
+        404: Word not found
+        422: Validation Error
+    """
     try:
         raw = wv.wv.most_similar(req.arr, topn=req.topn)
     except KeyError as e:
@@ -73,6 +108,32 @@ def predict(
     req: PredictRequest,
     b2=Depends(get_b2_model),
 ):
+    """
+    Модель которая делает определяет за сколько пользователь дойдет до уровня B2
+
+    Args:
+        req (PredictRequest):
+            - unique_words (int): Количество выученных уникальных слов
+            - words_a1 (int): Количество выученных слов уровня A1
+            - words_a2 (int): Количество выученных слов уровня А2
+            - words_b1 (int): Количество выученных слов уровня B1
+            - words_b2 (int): Количество выученных слов уровня B2
+            - avg_acc_7d (float): Средняя точность ответов за последние 7 дней
+            - avg_acc_30d (float): Средняя точность ответов за последние 30 дней
+            - avg_time_sec (float): Среднее время ответа пользователя в секудах
+            - words_day_7d (int): Количество выученных слов за последние 7 дней
+            - words_day_30d (int): Количество выученных слов за последние 30 дней
+            - streak (int): Количество дней подряд активности
+            - session_week (int): Количество учебных сессий за неделю
+
+    Returns:
+        Возвращает число - дни за которые пользователь может дойти до уровня B2
+
+    Raises:
+        400: Модель еще не обучена
+        400: Отсутствие каких либо колонок
+        422: Validation Error
+    """
     rid = getattr(request.state, "request_id", "-")
 
     if not b2.feature_names:
@@ -98,6 +159,23 @@ def predict_topic(
     req: SingleTopicRequest,
     topic=Depends(get_topic_predictor),
 ):
+    """
+    Модель которая по предложению (ОДНОЙ КАРТОЧКИ) пользователя может определить его тему (tags - если в проекте)
+
+    Limits:
+        Не более 30 запросов в минуту с одного IP
+
+
+    Args:
+        req (SingleTopicRequest):
+            - sentence (str): Предложение пользователя
+
+    Returns:
+        Возвращает соответствующий тег
+
+    Raises:
+        Пока отсутствуют (дима не сделал обработчики!!!!!)
+    """
     rid = getattr(request.state, "request_id", "-")
     result = topic.get_topic(req.sentence)
     logger.info(f"Topic: '{result}'", extra={"request_id": rid, "topic": result})
@@ -115,6 +193,23 @@ def predict_topics(
     req: TopicRequest,
     topic=Depends(get_topic_predictor),
 ):
+    """
+    Модель которая по предложения (ПО ВСЕЙ КОЛОДЕ) пользователя может определить темы (tags - если в проекте)
+
+    Limits:
+        Не более 30 запросов в минуту с одного IP
+
+
+    Args:
+        req (TopicRequest):
+            - sentences (list[str]): Список предложений
+
+    Returns:
+        Возвращает соответствующие теги для каждого предложени
+
+    Raises:
+        Пока отсутствуют (дима не сделал обработчики!!!!!)
+    """
     results = topic.get_topics(req.sentences)
     return TopicsResponse(topics=results)
 
@@ -130,6 +225,24 @@ def check_plagiarism(
     req: CheckPlagiarismRequest,
     anti_plag=Depends(get_anti_plagiarism),
 ):
+    """
+    Модель которая по тексту (текст именно большой, не предложение) определяет ИИ писал или не ИИ
+
+    Limits:
+        Не более 10 запросов в минуту с одного IP
+
+
+    Args:
+        req (CheckPlagiarismRequest):
+            - user_text (str): Текст пользователя
+            - get_index (bool): Если True: ответ будет 0 или 1, Если False: AI, HUMAN
+
+    Returns:
+        Возвращает AI or HUMAN
+
+    Raises:
+        Пока отсутствуют
+    """
     label = anti_plag.get_label(req.user_text)
 
     if req.get_index:

@@ -23,6 +23,22 @@ logger = build_logger("ml_linguo")
     response_model=WordLevelResponse,
 )
 def word_level(request: Request, req: WordLevelRequest):
+    """
+    Определяет уровень слова по шкале CEFR с использованием LLM - qwen2.5:7b
+
+    Args:
+        req (WordLevelRequest):
+            - word (str): слово
+            - translation (str): перевод слова (можно использовать всегда русский)
+
+    Returns:
+        Объект с определённым уровнем слова.
+
+    Raises:
+        500: LLM Error
+        422: Validation Error
+
+    """
     rid = getattr(request.state, "request_id", "-")
 
     logger.info(
@@ -57,6 +73,25 @@ def word_level(request: Request, req: WordLevelRequest):
 )
 @limiter.limit("10/minute")
 def sentence(request: Request, req: SentenceRequest):
+    """
+    Модель для генерации предложения за словом и уровнем слова используя LLM - qwen2.5:7b
+
+    Limits:
+        Не более 10 запросов в минуту с одного IP
+
+    Args:
+        req (SentenceRequest):
+            - word (str): Слово которое ввел пользователь
+            - level (str): Уровень слова который получаеться из базы данных уровней слов. Если в базе нету - запрос /word_level и сохранение слова
+            - language (str): Язык который выбрал пользователь
+
+    Returns:
+        Сгенерированое слово моделью
+
+    Raises:
+        500: LLM Error
+        422: Validation Error
+    """
     rid = getattr(request.state, "request_id", "-")
 
     logger.info(
@@ -92,6 +127,28 @@ def sentence(request: Request, req: SentenceRequest):
 )
 @limiter.limit("10/minute")
 async def correct_paragraph_checking(request: Request, req: CorrectParagraphRequest):
+    """
+    Модель которая ищет ошибки и создает подробный список неправильного слов и правильно ввдие key: value
+
+    Limits:
+        Не более 10 запросов в минуту с одного IP
+
+    Args:
+        req (CorrectParagraphRequest):
+            - user_sentence (str): Предложение пользователя (написано само либо сгенерировано через /sentence)
+
+    Returns:
+        Возвращает предложение пользователя, исправленное предложение ИИ и массив диктов, где каждый дикт это
+        "incorrect": "eated",
+        "correct": "ate"
+
+        Так же к слову может быть добален токен (<ADDED>) чтобы понимать что какой то элемент был добавлен или заменен
+
+    Raises:
+        500: LLM Error
+        422: Validation Error
+    """
+
     rid = getattr(request.state, "request_id", "-")
 
     logger.info(

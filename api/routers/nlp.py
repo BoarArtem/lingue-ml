@@ -28,6 +28,21 @@ PREPROCESSORS = {
     response_model=PreprocessResponse,
 )
 def preprocess(request: Request, req: PreprocessRequest):
+    """
+    Алгоритм который приводит все слова к первоначальной форме: running - run, ate - eat
+
+    Args:
+        req (PreprocessRequest):
+            - sentence (str): Предложение пользователя
+            - language (str): Язык предложения, Доступно только en | ru | es | fr | de | ch
+
+    Returns:
+        Возвращает слова которая приведены к первоначальной форме
+
+    Raises:
+        400: Unsupported language
+        422: Validation Error
+    """
     rid = getattr(request.state, "request_id", "-")
 
     if req.language not in PREPROCESSORS:
