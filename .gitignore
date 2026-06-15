@@ -10,14 +10,15 @@ __pycache__/
 Thumbs.db
 *.log
 *.pth
+*.wav
 
 # data
 data/*.pkl
 data/*.bin
 data/ljspeech/
 data/tts/LJSpeech-1.1/
-data/tts/fleurs/de_de/
-data/tts/fleurs/en_us/
+# fleurs audio datasets: ignore all language subdirs, keep root *.py scripts
+data/tts/fleurs/*/
 data/raw/
 data/preprocess/
 data/tokenizer/
