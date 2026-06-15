@@ -29,19 +29,19 @@ PREPROCESSORS = {
 )
 def preprocess(request: Request, req: PreprocessRequest):
     """
-    Предобрабатывает предложение: токенизация, нормализация, лемматизация и т.п.
-    Конкретный препроцессор выбирается по коду языка из PREPROCESSORS.
+    Алгоритм который приводит все слова к первоначальной форме: running - run, ate - eat
 
     Args:
         req (PreprocessRequest):
-            - sentence (str): Предложение для предобработки.
-            - language (str): Код языка (en | ru | es | fr | de | ch).
+            - sentence (str): Предложение пользователя
+            - language (str): Язык предложения, Доступно только en | ru | es | fr | de | ch
 
     Returns:
-        PreprocessResponse: tokens (list[str]) — список обработанных токенов.
+        Возвращает слова которая приведены к первоначальной форме
 
     Raises:
-        HTTPException 400: если язык не поддерживается.
+        400: Unsupported language
+        422: Validation Error
     """
     rid = getattr(request.state, "request_id", "-")
 

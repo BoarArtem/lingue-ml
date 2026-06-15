@@ -37,18 +37,21 @@ def spam_classification(
     device=Depends(get_device),
 ):
     """
-    Классифицирует текст карточки как спам (spam) или нормальный (ham).
-    Использует обученную модель спам-классификации и её словарь.
+    Модель которая классифицирует на спам ОДНУ карточку
 
     Limits:
-        Не более 30 запросов в минуту с одного IP.
+        Не более 30 запросов в минуту с одного IP
 
     Args:
         req (SpamClassificationRequest):
-            - user_sentence (str): Текст карточки для классификации.
+            - user_sentence (str): Предложение пользователя
 
     Returns:
-        SpamClassificationResponse: label (str) — "spam" или "ham".
+        Возвращает класс: spam | ham, где spam - спам, ham - нормалдасик
+
+    Raises:
+        500: Spam classification error
+        422: Validation Error
     """
     rid = getattr(request.state, "request_id", "-")
     logger.info(f"Spam classification: chars={len(req.user_sentence)}",
@@ -69,22 +72,22 @@ def spam_classification(
 @limiter.limit("30/minute")
 def similar(request: Request, req: SimilarRequest, wv=Depends(get_word2vec)):
     """
-    Находит наиболее похожие слова по эмбеддингам модели Word2Vec.
-    Принимает список слов и возвращает topn ближайших по косинусной близости.
+    Модель которая из списка слов, представляет слова которые могут быть похожие по смыслу
 
     Limits:
-        Не более 30 запросов в минуту с одного IP.
+        Не более 30 запросов в минуту с одного IP
 
     Args:
         req (SimilarRequest):
-            - arr (list[str]): Слова, для которых ищутся похожие.
-            - topn (int): Сколько похожих слов вернуть. По умолчанию 10.
+            - arr (list[str]): Список слов пользователя
+            - topn (int): Количество похожих слов которая выдаст модель
 
     Returns:
-        SimilarResponse: results — список пар слово/оценка близости (score).
+        Возвращает массив диктов в котором каждый дикт состоит из похожего слова и процентом схожести(score)
 
     Raises:
-        HTTPException 404: если хотя бы одного слова нет в словаре модели.
+        404: Word not found
+        422: Validation Error
     """
     try:
         raw = wv.wv.most_similar(req.arr, topn=req.topn)
@@ -106,19 +109,30 @@ def predict(
     b2=Depends(get_b2_model),
 ):
     """
-    Предсказывает количество дней до достижения уровня B2 по статистике ученика.
-    Признаки пользователя превращаются в DataFrame и подаются в обученную модель.
+    Модель которая делает определяет за сколько пользователь дойдет до уровня B2
 
     Args:
         req (PredictRequest):
-            - features (Features): Набор признаков обучения (изученные слова,
-              средняя точность, стрик, количество сессий и т.д.).
+            - unique_words (int): Количество выученных уникальных слов
+            - words_a1 (int): Количество выученных слов уровня A1
+            - words_a2 (int): Количество выученных слов уровня А2
+            - words_b1 (int): Количество выученных слов уровня B1
+            - words_b2 (int): Количество выученных слов уровня B2
+            - avg_acc_7d (float): Средняя точность ответов за последние 7 дней
+            - avg_acc_30d (float): Средняя точность ответов за последние 30 дней
+            - avg_time_sec (float): Среднее время ответа пользователя в секудах
+            - words_day_7d (int): Количество выученных слов за последние 7 дней
+            - words_day_30d (int): Количество выученных слов за последние 30 дней
+            - streak (int): Количество дней подряд активности
+            - session_week (int): Количество учебных сессий за неделю
 
     Returns:
-        PredictResponse: prediction (int) — прогноз количества дней до уровня B2.
+        Возвращает число - дни за которые пользователь может дойти до уровня B2
 
     Raises:
-        HTTPException 400: если модель не обучена или отсутствуют нужные колонки признаков.
+        400: Модель еще не обучена
+        400: Отсутствие каких либо колонок
+        422: Validation Error
     """
     rid = getattr(request.state, "request_id", "-")
 
@@ -146,17 +160,21 @@ def predict_topic(
     topic=Depends(get_topic_predictor),
 ):
     """
-    Определяет тему одного предложения.
+    Модель которая по предложению (ОДНОЙ КАРТОЧКИ) пользователя может определить его тему (tags - если в проекте)
 
     Limits:
-        Не более 10 запросов в минуту с одного IP.
+        Не более 30 запросов в минуту с одного IP
+
 
     Args:
         req (SingleTopicRequest):
-            - sentence (str): Предложение, тему которого нужно определить.
+            - sentence (str): Предложение пользователя
 
     Returns:
-        TopicResponse: topic (str) — предсказанная тема.
+        Возвращает соответствующий тег
+
+    Raises:
+        Пока отсутствуют (дима не сделал обработчики!!!!!)
     """
     rid = getattr(request.state, "request_id", "-")
     result = topic.get_topic(req.sentence)
@@ -176,17 +194,21 @@ def predict_topics(
     topic=Depends(get_topic_predictor),
 ):
     """
-    Определяет темы сразу для массива предложений (пакетная обработка).
+    Модель которая по предложения (ПО ВСЕЙ КОЛОДЕ) пользователя может определить темы (tags - если в проекте)
 
     Limits:
-        Не более 10 запросов в минуту с одного IP.
+        Не более 30 запросов в минуту с одного IP
+
 
     Args:
         req (TopicRequest):
-            - sentences (list[str]): Список предложений для определения тем.
+            - sentences (list[str]): Список предложений
 
     Returns:
-        TopicsResponse: topics (list[str]) — темы в порядке входных предложений.
+        Возвращает соответствующие теги для каждого предложени
+
+    Raises:
+        Пока отсутствуют (дима не сделал обработчики!!!!!)
     """
     results = topic.get_topics(req.sentences)
     return TopicsResponse(topics=results)
@@ -204,19 +226,22 @@ def check_plagiarism(
     anti_plag=Depends(get_anti_plagiarism),
 ):
     """
-    Проверяет, написан ли текст человеком или сгенерирован ИИ (AI-плагиат).
-    По умолчанию возвращает строковую метку; при get_index=True — числовой индекс.
+    Модель которая по тексту (текст именно большой, не предложение) определяет ИИ писал или не ИИ
 
     Limits:
-        Не более 10 запросов в минуту с одного IP.
+        Не более 10 запросов в минуту с одного IP
+
 
     Args:
         req (CheckPlagiarismRequest):
-            - user_text (str): Текст для проверки на AI-плагиат.
-            - get_index (bool): Если True — вернуть числовой индекс вместо строки. По умолчанию False.
+            - user_text (str): Текст пользователя
+            - get_index (bool): Если True: ответ будет 0 или 1, Если False: AI, HUMAN
 
     Returns:
-        CheckPlagiarismResponse: label — "human" | "ai" (или 0 | 1 при get_index=True).
+        Возвращает AI or HUMAN
+
+    Raises:
+        Пока отсутствуют
     """
     label = anti_plag.get_label(req.user_text)
 

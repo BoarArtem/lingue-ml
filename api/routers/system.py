@@ -35,6 +35,6 @@ def health(request: Request):
 
     return HealthResponse(
         status="ok" if all_ok else "degraded",
-        version=settings.app_version,
+        version="None",
         models=models_status,
     )
