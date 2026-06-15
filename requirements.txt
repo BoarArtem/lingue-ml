@@ -42,3 +42,5 @@ librosa
 torch
 torchvision
 transformers
+
+openai-whisper
