@@ -6,7 +6,8 @@ from gensim.models import Word2Vec
 from groq import Groq
 import os
 import nltk
-
+from models.llm_correct_paragraph import correct_paragraph, get_changed_word 
+from inference.context_evaluator import evaluate_context_with_groq, calculate_fsrs
 from models.b2_predictor import B2PredictorModel
 from models.llm_sentence_generate import llm_sentence_generate
 from models.llm_word_level import llm_word_level
@@ -41,11 +42,16 @@ ML сервис для Linguo.
     version="v2.9.3"
 )
 
-model_dir = os.getenv("MODEL_DIR", "/models") # for docker testing/production
-# ve_model = Word2Vec.load(f"{model_dir}/word2vec.model") - for my local testing
-ve_model = Word2Vec.load(f"{model_dir}/word2vec.model")
+model_dir = os.getenv("MODEL_DIR", "models")
+
+try:
+    ve_model = Word2Vec.load(f"{model_dir}/word2vec.model")
+except FileNotFoundError:
+    ve_model = None
+    print("Внимание: word2vec.model не найден локально. Эндпоинт /similar временно недоступен.")
 
 client = Groq(api_key=os.getenv("OPENAI_KEY"))
+
 
 try:
     predictor: B2PredictorModel = joblib.load(f"{model_dir}/b2_model.pkl")
@@ -96,6 +102,47 @@ class PreprocessRequest(BaseModel):
 
 class CorrectParagraphRequest(BaseModel):
     user_sentence: str = Field(example="I ate pizza yesterday")
+
+class FSRSEvaluationRequest(BaseModel):
+    target_phrase: str
+    user_sentence: str
+    expected_level: str = "A1" # Ожидаемый уровень слова по умолчанию
+
+class FSRSEvaluationResponse(BaseModel):
+    fsrs_grade: int
+    is_used: bool
+    fits_context: bool
+    sentence_level: str
+    grammar_errors: int
+    corrected_sentence: str
+
+
+@app.post("/evaluate_sentence", response_model=FSRSEvaluationResponse)
+def evaluate_sentence(req: FSRSEvaluationRequest):
+    try:
+        
+        corrected_sentence = correct_paragraph(req.user_sentence)
+        correct_words, incorrect_words = get_changed_word(req.user_sentence, corrected_sentence)
+        grammar_errors_count = len(incorrect_words)
+
+        
+        context_data = evaluate_context_with_groq(client, req.target_phrase, req.user_sentence)
+
+        
+        fsrs_grade = calculate_fsrs(context_data, grammar_errors_count, req.expected_level)
+
+        
+        return FSRSEvaluationResponse(
+            fsrs_grade=fsrs_grade,
+            is_used=context_data.get("is_used", False),
+            fits_context=context_data.get("fits_context", False),
+            sentence_level=context_data.get("sentence_level", "A1"),
+            grammar_errors=grammar_errors_count,
+            corrected_sentence=corrected_sentence
+        )
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post(
     "/similar",
