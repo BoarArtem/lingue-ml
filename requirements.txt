@@ -44,3 +44,5 @@ torchvision
 transformers
 
 openai-whisper
+faster_whisper
+nvidia-cublas-cu12
