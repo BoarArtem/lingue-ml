@@ -23,6 +23,18 @@ logger = build_logger("ml_linguo")
     response_model=WordLevelResponse,
 )
 def word_level(request: Request, req: WordLevelRequest):
+    """
+    Определяет уровень слова по шкале CEFR (A1, A2, B1, B2, C1, C2) с помощью LLM.
+    Слово и его перевод передаются в модель, которая возвращает строку уровня.
+
+    Args:
+        req (WordLevelRequest):
+            - word (str): Слово для оценки уровня.
+            - translation (str): Перевод слова (помогает модели снять неоднозначность).
+
+    Returns:
+        WordLevelResponse: level (str) — CEFR-уровень слова.
+    """
     rid = getattr(request.state, "request_id", "-")
 
     logger.info(
@@ -57,6 +69,22 @@ def word_level(request: Request, req: WordLevelRequest):
 )
 @limiter.limit("10/minute")
 def sentence(request: Request, req: SentenceRequest):
+    """
+    Генерирует пример предложения с заданным словом с помощью LLM.
+    Предложение строится под указанный уровень CEFR и язык, чтобы подходить ученику.
+
+    Limits:
+        Не более 10 запросов в минуту с одного IP.
+
+    Args:
+        req (SentenceRequest):
+            - word (str): Слово, которое должно встретиться в предложении.
+            - level (str): Целевой уровень CEFR (например, A1, B2).
+            - language (str): Код языка генерации (en | ru | es | fr | de | ch).
+
+    Returns:
+        SentenceResponse: sentence (str) — сгенерированное предложение.
+    """
     rid = getattr(request.state, "request_id", "-")
 
     logger.info(
@@ -92,6 +120,26 @@ def sentence(request: Request, req: SentenceRequest):
 )
 @limiter.limit("10/minute")
 async def correct_paragraph_checking(request: Request, req: CorrectParagraphRequest):
+    """
+    Исправляет ошибки в тексте пользователя и возвращает список изменённых слов.
+    Сначала LLM генерирует исправленный вариант (ai_sentence), затем считается
+    диф между исходным и исправленным текстом, из которого собираются пары
+    «неверное слово → правильное слово».
+
+    Обе тяжёлые операции (LLM и подсчёт дифа) выполняются в отдельном потоке
+    через asyncio.to_thread, чтобы не блокировать event loop.
+
+    Limits:
+        Не более 10 запросов в минуту с одного IP.
+
+    Args:
+        req (CorrectParagraphRequest):
+            - user_sentence (str): Исходный текст пользователя для проверки.
+
+    Returns:
+        CorrectParagraphResponse: исходный текст (user_sentence), исправленный
+        текст (ai_sentence) и список изменений changes (incorrect → correct).
+    """
     rid = getattr(request.state, "request_id", "-")
 
     logger.info(

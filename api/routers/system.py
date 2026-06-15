@@ -11,6 +11,15 @@ router = APIRouter(tags=["System"])
     response_model=HealthResponse,
 )
 def health(request: Request):
+    """
+    Проверка состояния сервиса (health check).
+    Сообщает, какие модели загружены, и общий статус: "ok", если загружены все,
+    иначе "degraded". Используется для мониторинга и проб готовности.
+
+    Returns:
+        HealthResponse: status ("ok" | "degraded"), version и флаги загрузки
+        по каждой модели (word2vec, spam, b2, topic, anti_plagiarism, tts).
+    """
     ml = request.app.state.ml
 
     models_status = {

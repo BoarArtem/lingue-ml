@@ -28,6 +28,21 @@ PREPROCESSORS = {
     response_model=PreprocessResponse,
 )
 def preprocess(request: Request, req: PreprocessRequest):
+    """
+    Предобрабатывает предложение: токенизация, нормализация, лемматизация и т.п.
+    Конкретный препроцессор выбирается по коду языка из PREPROCESSORS.
+
+    Args:
+        req (PreprocessRequest):
+            - sentence (str): Предложение для предобработки.
+            - language (str): Код языка (en | ru | es | fr | de | ch).
+
+    Returns:
+        PreprocessResponse: tokens (list[str]) — список обработанных токенов.
+
+    Raises:
+        HTTPException 400: если язык не поддерживается.
+    """
     rid = getattr(request.state, "request_id", "-")
 
     if req.language not in PREPROCESSORS:
