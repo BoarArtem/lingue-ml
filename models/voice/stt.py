@@ -8,7 +8,7 @@ class Whisper():
         self.whisper_model = whisper.load_model(name="medium", device=self.device)
 
     def get_text(self, wav_pth: str):
-        result = self.whisper_model.transcribe(audio=wav_pth, language="en")
+        result = self.whisper_model.transcribe(audio=wav_pth)
 
         return result["text"]
 
@@ -18,9 +18,11 @@ class FasterWhisper():
         self.faster_whisper_model = WhisperModel("medium", device="cuda", compute_type="float16")
 
     def get_text(self, wav_pth: str):
-        sigments, info = self.faster_whisper_model.transcribe(wav_pth, language="ru")
+        """
+        :param wav_pth: Файл .wav формата
+        :return: Возвращает готовый текст из аудио, где язык подбирается автоматически на основе озвучки
+        """
+        sigments, info = self.faster_whisper_model.transcribe(wav_pth)
 
         for sigment in sigments:
             return sigment.text
-
-
