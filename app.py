@@ -106,7 +106,7 @@ class CorrectParagraphRequest(BaseModel):
 class FSRSEvaluationRequest(BaseModel):
     target_phrase: str
     user_sentence: str
-    expected_level: str = "A1" # Ожидаемый уровень слова по умолчанию
+    expected_level: str = "A1" 
 
 class FSRSEvaluationResponse(BaseModel):
     fsrs_grade: int
