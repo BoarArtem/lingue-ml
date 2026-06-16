@@ -1,12 +1,11 @@
 from langchain_ollama import ChatOllama
 from langchain.tools import tool
-from langchain.agents import create_agent
+
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.chat_history import BaseChatMessageHistory
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
-from langchain_core.messages import AIMessage
 from langchain_core.messages import ToolMessage
 
 
