@@ -6,6 +6,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.chat_history import BaseChatMessageHistory
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain_core.messages import AIMessage
 from langchain_core.messages import ToolMessage
 
 
@@ -13,8 +14,6 @@ from tavily import TavilyClient
 
 import os
 from dotenv import load_dotenv
-
-import logging
 
 load_dotenv()
 
@@ -41,6 +40,7 @@ VOICING_SYSTEM_PROMPT = ChatPromptTemplate.from_messages([
         "- If the question is unclear, ask one brief clarifying question instead of a "
         "long explanation.\n"
         "- Reply in the same language the user speaks."
+        "Your answer will be used for voicing, so your response has to be clear."
      ),
     ("user", "{input}")
 ])
@@ -59,7 +59,6 @@ def search(query: str):
     response = tavily_client.search(
         query=query,
         include_answer=True,
-        search_depth="advanced",
     )
 
     # Return a clean, grounded string instead of the raw dict so a small model
@@ -75,7 +74,7 @@ def search(query: str):
 
 
 class LLMWithTools:
-    def __init__(self, langchain_model_name: str):
+    def __init__(self, langchain_model_name: str = os.getenv("OLLAMA_MODEL_NAME")):
         self.tools = [search]
 
         self.str_output_parser = StrOutputParser()
@@ -87,30 +86,25 @@ class LLMWithTools:
             get_session_history,
         )
 
-    def invoke(self, prompt: str, session_id: str = "default"):
+    def invoke(self, prompt: str, session_id: str = "user_session_1"):
         messages = VOICING_SYSTEM_PROMPT.invoke(
             {"input": prompt},
         ).to_messages()
 
         config = {"configurable": {"session_id": session_id}}
-        ai_response = self.llm_with_history.invoke(messages, config=config)
 
-        # Keep handling tool calls until the model produces a spoken answer.
-        while ai_response.tool_calls:
-            messages.append(ai_response)
+        ai_response = self.llm_with_tools.invoke(messages)
 
-            for tool_call in ai_response.tool_calls:
-                logging.info(f"Tool to call: {tool_call['name']}")
-                logging.info(f"Arguments: {tool_call['args']}")
+        for tool_call in ai_response.tool_calls:
+            if tool_call["name"] == "search":
+                result = search.invoke(tool_call["args"])
+                messages.append(
+                    ToolMessage(content=str(result), tool_call_id=tool_call["id"])
+                )
 
-                if tool_call["name"] == "search":
-                    result = search.invoke(tool_call["args"])
-                    logging.info(f"Result: {result}")
-                    messages.append(
-                        ToolMessage(content=str(result), tool_call_id=tool_call["id"])
-                    )
+        final_response = self.llm_with_history.invoke(messages, config=config)
 
-        return ai_response.content
+        return final_response.content
 
 if __name__ == "__main__":
     llm = LLMWithTools(langchain_model_name="qwen2.5:7b")
